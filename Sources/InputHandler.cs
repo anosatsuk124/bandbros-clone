@@ -37,7 +37,6 @@ public partial class InputHandler : Node
     {
         if (@event.IsActionPressed("B_LEFT"))
         {
-            GD.Print("Sharp");
             _sharp = 1;
         }
         if (@event.IsActionReleased("B_LEFT"))
@@ -47,7 +46,6 @@ public partial class InputHandler : Node
 
         if (@event.IsActionPressed("B_RIGHT"))
         {
-            GD.Print("octave up");
             _octave = 1;
         }
         if (@event.IsActionReleased("B_RIGHT"))
