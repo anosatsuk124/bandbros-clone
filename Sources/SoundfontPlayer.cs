@@ -10,11 +10,11 @@ public partial class SoundfontPlayer : Node
 	[Export] public AudioStreamPlayer Player { get; set; }
 
 	public Synthesizer Synthesizer =
-		new Synthesizer(ResourceManager.GetSoundfontAbsPath(ProjectSettings.GetSetting("audio/soundfont/default_soundfont").AsString()), _sampleHz);
+		new Synthesizer(ResourceManager.GetSoundfontAbsPath(ProjectSettings.GetSetting("audio/soundfont_player/default_soundfont").AsString()), _sampleHz);
 
 
 	private AudioStreamGeneratorPlayback _playback; // Will hold the AudioStreamGeneratorPlayback.
-	private static int _sampleHz = 44100; // The sample rate of the sound wave.
+	private static int _sampleHz = ProjectSettings.GetSetting("audio/soundfont_player/sample_rate").AsInt32(); // The sample rate of the sound wave.
 
 	public override void _Ready()
 	{
