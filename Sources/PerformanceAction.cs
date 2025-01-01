@@ -109,11 +109,11 @@ public sealed record PerformanceAction(PerformanceActionKind ActionKind, bool Is
     }
 }
 
-public partial class PerformanceActionHandler : Node
+public abstract partial class PerformanceActionHandler : Node
 {
     [Export] public SoundfontPlayer SoundfontPlayer { get; private set; }
 
-    [Export(PropertyHint.Range, "0,15")] public int Channel { get; private set; }
+    public MidiChannel Channel { get; set; } = new MidiChannel(0);
 
     public Scale? Scale { get; private set; } = null;
 

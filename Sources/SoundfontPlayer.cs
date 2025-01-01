@@ -11,12 +11,12 @@ public partial class SoundfontPlayer : Node
 	[Export] public SoundfontAudioStreamPlayer Player { get; private set; }
 
 	public Synthesizer Synthesizer { get; private set; } =
-		new Synthesizer(ResourceManager.GetSoundfontAbsPath(ProjectSettings.GetSetting("audio/soundfont_player/default_soundfont").AsString()), _sampleHz);
+		new Synthesizer(Constants.DEFAULT_SOUNDFONT, _sampleHz);
 
-	public MidiInstrumet[] Instruments { get; private set; } = new MidiInstrumet[16];
+	public MidiInstrumet[] Instruments { get; private set; } = new MidiInstrumet[Constants.MAX_MIDI_CHANNEL_COUNT];
 
 	private AudioStreamGeneratorPlayback _playback; // Will hold the AudioStreamGeneratorPlayback.
-	private static int _sampleHz = ProjectSettings.GetSetting("audio/soundfont_player/sample_rate").AsInt32(); // The sample rate of the sound wave.
+	private static int _sampleHz = Constants.SAMPLE_RATE; // The sample rate of the sound wave.
 
 	public SoundfontPlayer(SoundfontAudioStreamPlayer player)
 	{
@@ -57,6 +57,14 @@ public partial class SoundfontPlayer : Node
 	{
 		Instruments[channel] = new MidiInstrumet(bank, program);
 		Synthesizer.ProcessMidiMessage(channel, 0xC0, Instruments[channel].bank, Instruments[channel].program);
+	}
+
+	public void SetInstruments(MidiInstrumet[] midiInstrumets)
+	{
+		for (int i = 0; i < Constants.MAX_MIDI_CHANNEL_COUNT; i++)
+		{
+			SetInstrument(new MidiChannel(i), midiInstrumets[i].bank, midiInstrumets[i].program);
+		}
 	}
 
 	private void _fillBuffer()

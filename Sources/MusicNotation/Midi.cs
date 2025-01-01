@@ -7,7 +7,7 @@ public sealed record MidiChannel
     private int _channel;
     public MidiChannel(int channel)
     {
-        if (channel < 0 || channel > 15)
+        if (channel < 0 || channel > Constants.MAX_MIDI_CHANNEL)
         {
             throw new System.ArgumentOutOfRangeException("MIDI channel must be between 0 and 15.");
         }
