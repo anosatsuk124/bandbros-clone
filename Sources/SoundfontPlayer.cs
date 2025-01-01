@@ -1,20 +1,27 @@
 namespace BandBrosClone;
 
 using System.Threading.Tasks;
+using BandBrosClone.MusicNotation;
 using Godot;
 using MeltySynth;
 
 [GlobalClass]
 public partial class SoundfontPlayer : Node
 {
-	[Export] public AudioStreamPlayer Player { get; set; }
+	[Export] public SoundfontAudioStreamPlayer Player { get; private set; }
 
-	public Synthesizer Synthesizer =
+	public Synthesizer Synthesizer { get; private set; } =
 		new Synthesizer(ResourceManager.GetSoundfontAbsPath(ProjectSettings.GetSetting("audio/soundfont_player/default_soundfont").AsString()), _sampleHz);
 
+	public MidiInstrumet[] Instruments { get; private set; } = new MidiInstrumet[16];
 
 	private AudioStreamGeneratorPlayback _playback; // Will hold the AudioStreamGeneratorPlayback.
 	private static int _sampleHz = ProjectSettings.GetSetting("audio/soundfont_player/sample_rate").AsInt32(); // The sample rate of the sound wave.
+
+	public SoundfontPlayer(SoundfontAudioStreamPlayer player)
+	{
+		this.Player = player;
+	}
 
 	public override void _Ready()
 	{
@@ -36,6 +43,22 @@ public partial class SoundfontPlayer : Node
 		}
 	}
 
+	public void PlayNoteOn(int channel, int note, int velocity)
+	{
+		Synthesizer.NoteOn(channel, note, velocity);
+	}
+
+	public void PlayNoteOff(int channel, int note)
+	{
+		Synthesizer.NoteOff(channel, note);
+	}
+
+	public void SetInstrument(MidiChannel channel, int bank, int program = 0)
+	{
+		Instruments[channel] = new MidiInstrumet(bank, program);
+		Synthesizer.ProcessMidiMessage(channel, 0xC0, Instruments[channel].bank, Instruments[channel].program);
+	}
+
 	private void _fillBuffer()
 	{
 		if (_playback == null)
@@ -55,5 +78,15 @@ public partial class SoundfontPlayer : Node
 		{
 			_playback.PushFrame(new Vector2(left[i], right[i]));
 		}
+	}
+}
+
+
+[GlobalClass]
+public partial class SoundfontAudioStreamPlayer : AudioStreamPlayer
+{
+	public SoundfontAudioStreamPlayer() : base()
+	{
+		this.Stream = new AudioStreamGenerator();
 	}
 }

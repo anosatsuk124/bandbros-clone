@@ -1,4 +1,22 @@
-namespace BandBrosClone.MIDI;
+namespace BandBrosClone.MusicNotation;
+
+public sealed record MidiInstrumet(int bank, int program);
+
+public sealed record MidiChannel
+{
+    private int _channel;
+    public MidiChannel(int channel)
+    {
+        if (channel < 0 || channel > 15)
+        {
+            throw new System.ArgumentOutOfRangeException("MIDI channel must be between 0 and 15.");
+        }
+
+        _channel = channel;
+    }
+
+    public static implicit operator int(MidiChannel channel) => channel._channel;
+}
 
 public sealed record MidiNote(int Note)
 {
