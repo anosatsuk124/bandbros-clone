@@ -91,7 +91,7 @@ public sealed record PerformanceAction(PerformanceActionKind ActionKind, bool Is
     {
         if (scale is null)
         {
-            scale = new Scale(new TonalKey(MidiNote.C4), new int[] { 2, 2, 1, 2, 2, 2, 1 });
+            scale = new Scale(new TonalKey(MidiNote.C4), new int[] { 0, 2, 4, 5, 7, 9, 11, 12 });
         }
 
         return ActionKind switch
@@ -166,6 +166,11 @@ public abstract partial class PerformanceActionHandler : Node
     public void PerformHandler(PerformanceAction action)
     {
         _modulateWithAction(action);
+
+        if (action.ActionKind is PerformanceActionKind.SHARP || action.ActionKind is PerformanceActionKind.OCTAVE_UP)
+        {
+            return;
+        }
 
         _playNoteWithInputAction(action, PerformanceActionKind.I, action.ToMidiNote(_sharp, _octave, Scale));
         _playNoteWithInputAction(action, PerformanceActionKind.II, action.ToMidiNote(_sharp, _octave, Scale));

@@ -5,8 +5,6 @@ using System;
 
 public partial class Main : Node2D
 {
-	[Export] public SoundfontPlayer SFPlayer { get; set; }
-
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{

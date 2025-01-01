@@ -15,18 +15,19 @@ public partial class PerformanceManager : Node
     }
 
     public SoundfontPlayer SoundfontPlayer { get; private set; }
+    public AudioStreamPlayer StreamPlayer { get; set; }
 
     public InputHandler InputHandler { get; private set; }
 
-    public PerformanceManager() : base()
-    {
-        SoundfontPlayer = new SoundfontPlayer(new SoundfontAudioStreamPlayer());
-        InputHandler = new InputHandler(SoundfontPlayer);
-    }
-
     public override void _Ready()
     {
+        StreamPlayer = new SoundfontAudioStreamPlayer();
+        AddChild(StreamPlayer);
+
+        SoundfontPlayer = new SoundfontPlayer(StreamPlayer);
         AddChild(SoundfontPlayer);
+
+        InputHandler = new InputHandler(SoundfontPlayer);
         AddChild(InputHandler);
     }
 }

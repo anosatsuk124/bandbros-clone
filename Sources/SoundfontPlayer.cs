@@ -8,7 +8,7 @@ using MeltySynth;
 [GlobalClass]
 public partial class SoundfontPlayer : Node
 {
-	[Export] public SoundfontAudioStreamPlayer Player { get; private set; }
+	[Export] public AudioStreamPlayer Player { get; private set; }
 
 	public Synthesizer Synthesizer { get; private set; } =
 		new Synthesizer(Constants.DEFAULT_SOUNDFONT, _sampleHz);
@@ -18,7 +18,7 @@ public partial class SoundfontPlayer : Node
 	private AudioStreamGeneratorPlayback _playback; // Will hold the AudioStreamGeneratorPlayback.
 	private static int _sampleHz = Constants.SAMPLE_RATE; // The sample rate of the sound wave.
 
-	public SoundfontPlayer(SoundfontAudioStreamPlayer player)
+	public SoundfontPlayer(AudioStreamPlayer player)
 	{
 		this.Player = player;
 	}
@@ -27,7 +27,7 @@ public partial class SoundfontPlayer : Node
 	{
 		if (Player.Stream is AudioStreamGenerator generator) // Type as a generator to access MixRate.
 		{
-			generator.BufferLength = 1f / 120f;
+			generator.BufferLength = 1f / Constants.RENDER_TO_BUFFER_RATE;
 			generator.MixRate = _sampleHz;
 
 			Player.Play();
