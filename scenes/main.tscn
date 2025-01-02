@@ -1,10 +1,13 @@
-[gd_scene load_steps=3 format=3 uid="uid://bef4byeys23kg"]
+[gd_scene load_steps=4 format=3 uid="uid://bef4byeys23kg"]
 
 [ext_resource type="Script" path="res://Sources/Main.cs" id="1_tnfuc"]
 [ext_resource type="Script" path="res://Sources/PerformanceManager.cs" id="2_tgkmn"]
+[ext_resource type="PackedScene" uid="uid://btttge8ui6nb1" path="res://scenes/performance_debug_ui.tscn" id="3_dia4g"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_tnfuc")
 
 [node name="PerformanceManager" type="Node" parent="."]
 script = ExtResource("2_tgkmn")
+
+[node name="PerformanceDebugUi" parent="." instance=ExtResource("3_dia4g")]

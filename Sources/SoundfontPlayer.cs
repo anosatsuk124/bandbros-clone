@@ -15,8 +15,10 @@ public partial class SoundfontPlayer : Node
 
 	public MidiInstrumet[] Instruments { get; private set; } = new MidiInstrumet[Constants.MAX_MIDI_CHANNEL_COUNT];
 
-	private AudioStreamGeneratorPlayback _playback; // Will hold the AudioStreamGeneratorPlayback.
+	private AudioStreamGeneratorPlayback _playback;
 	private static int _sampleHz = Constants.SAMPLE_RATE; // The sample rate of the sound wave.
+
+	public bool IsPlaying = true;
 
 	public SoundfontPlayer(AudioStreamPlayer player)
 	{
@@ -25,7 +27,7 @@ public partial class SoundfontPlayer : Node
 
 	public override void _Ready()
 	{
-		if (Player.Stream is AudioStreamGenerator generator) // Type as a generator to access MixRate.
+		if (Player.Stream is AudioStreamGenerator generator)
 		{
 			generator.BufferLength = 1f / Constants.RENDER_TO_BUFFER_RATE;
 			generator.MixRate = _sampleHz;
@@ -67,12 +69,25 @@ public partial class SoundfontPlayer : Node
 		}
 	}
 
+	public void Play()
+	{
+		IsPlaying = true;
+	}
+
+	public void Stop()
+	{
+		IsPlaying = false;
+		Synthesizer.Reset();
+	}
+
+	public void Toggle()
+	{
+		IsPlaying = !IsPlaying;
+	}
+
 	private void _fillBuffer()
 	{
-		if (_playback == null)
-		{
-			return;
-		}
+		if (!IsPlaying || _playback is null) return;
 
 		int framesAvailable = _playback.GetFramesAvailable();
 

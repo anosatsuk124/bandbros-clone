@@ -6,6 +6,10 @@ using Godot;
 [GlobalClass]
 public partial class PerformanceManager : Node
 {
+    public static PerformanceManager Instance { get; private set; } = null;
+
+    public Scale Scale { get => InputHandler.Scale; set => InputHandler.Scale = value; }
+
     public MidiChannel PlayerChannel { get => InputHandler.Channel; set => InputHandler.Channel = value; }
 
     public MidiInstrumet[] Instruments
@@ -19,8 +23,13 @@ public partial class PerformanceManager : Node
 
     public InputHandler InputHandler { get; private set; }
 
+    public void Play() => SoundfontPlayer.Play();
+    public void Stop() => SoundfontPlayer.Stop();
+    public void TogglePlay() => SoundfontPlayer.Toggle();
+
     public override void _Ready()
     {
+        Instance = this;
         StreamPlayer = new SoundfontAudioStreamPlayer();
         AddChild(StreamPlayer);
 
@@ -29,5 +38,10 @@ public partial class PerformanceManager : Node
 
         InputHandler = new InputHandler(SoundfontPlayer);
         AddChild(InputHandler);
+    }
+
+    public void SetInstrument(MidiChannel channel, int bank, int program = 0)
+    {
+        SoundfontPlayer.SetInstrument(channel, bank, program);
     }
 }

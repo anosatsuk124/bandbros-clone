@@ -91,7 +91,7 @@ public sealed record PerformanceAction(PerformanceActionKind ActionKind, bool Is
     {
         if (scale is null)
         {
-            scale = new Scale(new TonalKey(MidiNote.C4), new int[] { 0, 2, 4, 5, 7, 9, 11, 12 });
+            scale = Scale.Major(new TonalKey(MidiNote.C4));
         }
 
         return ActionKind switch
@@ -115,7 +115,7 @@ public abstract partial class PerformanceActionHandler : Node
 
     public MidiChannel Channel { get; set; } = new MidiChannel(0);
 
-    public Scale? Scale { get; private set; } = null;
+    public Scale? Scale { get; set; } = null;
 
     public PerformanceActionHandler(SoundfontPlayer soundfontPlayer, MidiChannel? channel = null)
     {

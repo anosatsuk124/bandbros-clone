@@ -1,10 +1,10 @@
 namespace BandBrosClone.MusicNotation;
 
-public sealed record MidiInstrumet(int bank, int program);
+public sealed record MidiInstrumet(int bank = 0, int program = 0);
 
 public sealed record MidiChannel
 {
-    private int _channel;
+    public int channel;
     public MidiChannel(int channel)
     {
         if (channel < 0 || channel > Constants.MAX_MIDI_CHANNEL)
@@ -12,10 +12,10 @@ public sealed record MidiChannel
             throw new System.ArgumentOutOfRangeException("MIDI channel must be between 0 and 15.");
         }
 
-        _channel = channel;
+        this.channel = channel;
     }
 
-    public static implicit operator int(MidiChannel channel) => channel._channel;
+    public static implicit operator int(MidiChannel channel) => channel.channel;
 }
 
 public sealed record MidiNote(int Note)
