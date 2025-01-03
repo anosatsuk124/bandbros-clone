@@ -3,6 +3,7 @@ namespace BandBrosClone;
 #nullable enable
 
 using System.Collections.Generic;
+using System.Xml.Serialization;
 using BandBrosClone.MusicNotation;
 using Melanchall.DryWetMidi.Core;
 using ScaleClass = MusicNotation.Scale;
@@ -51,21 +52,8 @@ public class Chart
 {
     public List<ChartTrack> Tracks { get; private set; } = new List<ChartTrack>();
 
-    public Dictionary<MidiChannel, MidiInstrumet> Instruments { get; private set; }
-
     public Chart()
     {
-        this.Instruments = new Dictionary<MidiChannel, MidiInstrumet>();
-    }
-
-    public Chart(Dictionary<MidiChannel, MidiInstrumet> instruments)
-    {
-        this.Instruments = instruments;
-    }
-
-    public void ChangeInstrument(MidiChannel channel, MidiInstrumet instrument)
-    {
-        this.Instruments.Add(channel, instrument);
     }
 
     public void AddTrack(ChartTrack track)
@@ -106,7 +94,7 @@ public class Chart
                 }
                 else if (midiEvent is NoteOnEvent noteOn)
                 {
-                    currentNote2Time.Add(new MidiNote(noteOn.NoteNumber), new ChartNoteHold(new MidiChannel(noteOn.Channel), new MidiNote(noteOn.NoteNumber, noteOn.Velocity), new MidiTime(0)));
+                    currentNote2Time.TryAdd(new MidiNote(noteOn.NoteNumber), new ChartNoteHold(new MidiChannel(noteOn.Channel), new MidiNote(noteOn.NoteNumber, noteOn.Velocity), new MidiTime(0)));
                 }
                 else if (midiEvent is NoteOffEvent noteOff)
                 {

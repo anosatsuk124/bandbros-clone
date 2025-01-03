@@ -20,7 +20,7 @@ offset_bottom = 182.0
 layout_mode = 2
 metadata/_edit_use_anchors_ = true
 
-[node name="TextEdit" type="LineEdit" parent="PanelContainer/VBoxContainer"]
+[node name="MidiFilePath" type="LineEdit" parent="PanelContainer/VBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 placeholder_text = "MIDI File Path"
@@ -30,7 +30,7 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Pick a MIDI File"
 
-[node name="Convert" type="Button" parent="PanelContainer/VBoxContainer"]
+[node name="ConvertButton" type="Button" parent="PanelContainer/VBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Convert"
