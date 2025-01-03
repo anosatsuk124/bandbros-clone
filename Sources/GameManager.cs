@@ -6,7 +6,7 @@ public partial class GameManager : Node
 {
     public static GameManager Instance { get; private set; }
 
-    private Logger _logger { get; } = new Logger();
+    private static Logger _logger { get; } = new Logger();
 
     public override void _Ready()
     {
@@ -16,18 +16,18 @@ public partial class GameManager : Node
 
     public static void Error(string message)
     {
-        Instance.EmitSignal(nameof(Logger.ErrorSignal), message);
+        _logger.EmitSignal(nameof(Logger.ErrorSignal), message);
         Instance.Quit();
     }
 
-    public static void Log(string message)
+    public static void Info(string message)
     {
-        Instance.EmitSignal(nameof(Logger.LogSignal), message);
+        _logger.EmitSignal(nameof(Logger.InfoSignal), message);
     }
 
     public static void Warn(string message)
     {
-        Instance.EmitSignal(nameof(Logger.WarnSignal), message);
+        _logger.EmitSignal(nameof(Logger.WarnSignal), message);
     }
 
     public void Quit()
@@ -39,7 +39,7 @@ public partial class GameManager : Node
 public partial class Logger : Node
 {
     [Signal]
-    public delegate void LogSignalEventHandler(string message);
+    public delegate void InfoSignalEventHandler(string message);
 
     [Signal]
     public delegate void ErrorSignalEventHandler(string message);
@@ -49,7 +49,7 @@ public partial class Logger : Node
 
     public override void _Ready()
     {
-        LogSignal += Info;
+        InfoSignal += Info;
 
         ErrorSignal += Error;
 
