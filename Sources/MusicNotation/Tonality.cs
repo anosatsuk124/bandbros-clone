@@ -1,3 +1,5 @@
+using System;
+
 namespace BandBrosClone.MusicNotation;
 
 public sealed record TonalKey(MidiNote baseMidiNote);

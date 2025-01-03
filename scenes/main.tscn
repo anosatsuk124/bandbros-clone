@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://bef4byeys23kg"]
+[gd_scene load_steps=5 format=3 uid="uid://bef4byeys23kg"]
 
 [ext_resource type="Script" path="res://Sources/Main.cs" id="1_tnfuc"]
 [ext_resource type="Script" path="res://Sources/PerformanceManager.cs" id="2_tgkmn"]
 [ext_resource type="PackedScene" uid="uid://btttge8ui6nb1" path="res://scenes/performance_debug_ui.tscn" id="3_dia4g"]
+[ext_resource type="PackedScene" uid="uid://l466hedo3v8k" path="res://scenes/chart_creator_debug_ui.tscn" id="4_46fn1"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_tnfuc")
@@ -10,5 +11,19 @@ script = ExtResource("1_tnfuc")
 [node name="PerformanceManager" type="Node" parent="."]
 script = ExtResource("2_tgkmn")
 
-[node name="PerformanceDebugUi" parent="." node_paths=PackedStringArray("PerformanceManager") instance=ExtResource("3_dia4g")]
-PerformanceManager = NodePath("../PerformanceManager")
+[node name="TabContainer" type="TabContainer" parent="."]
+offset_right = 40.0
+offset_bottom = 40.0
+current_tab = 1
+clip_tabs = false
+deselect_enabled = true
+
+[node name="PerformanceDebugUi" parent="TabContainer" node_paths=PackedStringArray("PerformanceManager") instance=ExtResource("3_dia4g")]
+visible = false
+layout_mode = 2
+PerformanceManager = NodePath("../../PerformanceManager")
+metadata/_tab_index = 0
+
+[node name="ChartCreatorDebugUi" parent="TabContainer" instance=ExtResource("4_46fn1")]
+layout_mode = 2
+metadata/_tab_index = 1

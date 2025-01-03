@@ -13,23 +13,28 @@ public partial class InputHandler : PerformanceActionHandler
 {
     public InputHandler(SoundfontPlayer soundfontPlayer, MidiChannel? channel = null) : base(soundfontPlayer, channel) { }
 
-    public override void _Process(double delta)
+    public override void _PhysicsProcess(double delta)
     {
-        _InputHandler();
+        _inputHandler();
     }
 
     private bool[] _currentPlayingActions = new bool[Enum.GetValues<PerformanceActionKind>().Length];
 
-    private void _InputHandler()
+    private void _inputHandler()
     {
         foreach (var action in Enum.GetValues<PerformanceActionKind>())
         {
-            if (!_currentPlayingActions[(int)action] && Input.IsActionPressed(action.ToActionName()))
+            var isActionPlaying = _currentPlayingActions[(int)action];
+            var isActionPressed = Input.IsActionPressed(action.ToActionName());
+
+            if ((isActionPlaying && isActionPressed) || (!isActionPlaying && !isActionPressed)) continue;
+
+            if (!isActionPlaying && isActionPressed)
             {
                 PerformHandler(new PerformanceAction(action, true, false));
                 _currentPlayingActions[(int)action] = true;
             }
-            else if (_currentPlayingActions[(int)action] && !Input.IsActionPressed(action.ToActionName()))
+            else if (isActionPlaying && !isActionPressed)
             {
                 PerformHandler(new PerformanceAction(action, false, true));
                 _currentPlayingActions[(int)action] = false;

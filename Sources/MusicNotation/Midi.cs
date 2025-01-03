@@ -2,6 +2,28 @@ namespace BandBrosClone.MusicNotation;
 
 public sealed record MidiInstrumet(int bank = 0, int program = 0);
 
+public sealed record MidiTimeSignature(int numerator, int denominator);
+
+/// <summary>
+/// Represents a MIDI tempo in microseconds per quarter note.
+/// </summary>
+/// <param name="tempo"></param>
+public sealed record MidiTempo(MidiTime microSecondsPerQuarterNote)
+{
+    public MidiTempo(long tempo) : this(new MidiTime(tempo)) { }
+}
+
+/// <summary>
+/// Represents a MIDI time in microseconds.
+/// </summary>
+/// <param name="time"></param>
+public sealed record MidiTime(long time)
+{
+    public MidiTime Add(MidiTime time) => new MidiTime(this.time + time.time);
+    public MidiTime Add(long time) => new MidiTime(this.time + time);
+}
+
+
 public sealed record MidiChannel
 {
     public int channel;
@@ -18,7 +40,7 @@ public sealed record MidiChannel
     public static implicit operator int(MidiChannel channel) => channel.channel;
 }
 
-public sealed record MidiNote(int Note)
+public sealed record MidiNote(int Note, int Velocity = 100)
 {
     public static implicit operator int(MidiNote note) => note.Note;
 

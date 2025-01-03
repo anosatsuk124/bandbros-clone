@@ -7,8 +7,6 @@ using MusicNotation;
 public partial class PerformanceDebugUi : Control
 {
 	[Export] public PerformanceManager PerformanceManager { get; set; }
-	private Button _toggleButton;
-
 	private Control _toToggleNode;
 
 	private LineEdit _keyInput;
@@ -17,10 +15,6 @@ public partial class PerformanceDebugUi : Control
 
 	public override void _Ready()
 	{
-		_toggleButton = GetNode<Button>("%ToggleButton");
-		_toToggleNode = _toggleButton.GetChild<Control>(0);
-		_toggleButton.Pressed += () => _toToggleNode.Visible = !_toToggleNode.Visible;
-
 		_keyInput = GetNode<LineEdit>("%KeyInput");
 		_keyInput.TextChanged += _onKeyInputTextChanged;
 
@@ -59,7 +53,7 @@ public partial class PerformanceDebugUi : Control
 
 		if (int.TryParse(newText, out int key))
 		{
-			PerformanceManager.Scale = MusicScale.Major(new TonalKey(new MidiNote(key)));
+			PerformanceManager.Scale = MusicScale.Major(Constants.DEFAULT_TONAL_KEY);
 		}
 	}
 }

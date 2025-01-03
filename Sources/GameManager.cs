@@ -14,7 +14,7 @@ public partial class GameManager : Node
         AddChild(_logger);
     }
 
-    public static void ReportError(string message)
+    public static void Error(string message)
     {
         Instance.EmitSignal(nameof(Logger.ErrorSignal), message);
         Instance.Quit();
@@ -23,6 +23,11 @@ public partial class GameManager : Node
     public static void Log(string message)
     {
         Instance.EmitSignal(nameof(Logger.LogSignal), message);
+    }
+
+    public static void Warn(string message)
+    {
+        Instance.EmitSignal(nameof(Logger.WarnSignal), message);
     }
 
     public void Quit()
@@ -39,11 +44,16 @@ public partial class Logger : Node
     [Signal]
     public delegate void ErrorSignalEventHandler(string message);
 
+    [Signal]
+    public delegate void WarnSignalEventHandler(string message);
+
     public override void _Ready()
     {
         LogSignal += Info;
 
         ErrorSignal += Error;
+
+        WarnSignal += Warn;
     }
 
     public void Info(string message)
@@ -51,8 +61,13 @@ public partial class Logger : Node
         GD.Print($"[INFO] [{Time.GetTimeStringFromSystem()}]: {message}");
     }
 
+    public void Warn(string message)
+    {
+        GD.PushWarning($"[WARN] [{Time.GetTimeStringFromSystem()}]: {message}");
+    }
+
     public void Error(string message)
     {
-        GD.PrintErr($"[ERROR] [{Time.GetTimeStringFromSystem()}]: {message}");
+        GD.PushError($"[ERROR] [{Time.GetTimeStringFromSystem()}]: {message}");
     }
 }

@@ -28,13 +28,13 @@ public static class ResourceManager
             {
                 if (DirAccess.MakeDirRecursiveAbsolute(userPath.GetBaseDir()) is not Error.Ok)
                 {
-                    GameManager.ReportError($"Failed to create directory: {userPath.GetBaseDir()}");
+                    GameManager.Error($"Failed to create directory: {userPath.GetBaseDir()}");
                 }
             }
 
             if (!FileUtils.CopyFile(resourcePath, userPath))
             {
-                GameManager.ReportError($"Failed to copy resource file: {path}");
+                GameManager.Error($"Failed to copy resource file: {path}");
             }
 
             return ProjectSettings.GlobalizePath(userPrefix + path);

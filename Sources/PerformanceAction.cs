@@ -10,6 +10,38 @@ using System;
 
 public static class PerformanceActionKindExtension
 {
+    public static PerformanceActionKind[] FromMidiNote(this PerformanceActionKind _, MidiNote note, int sharp = 0, int octave = 0, Scale? scale = null)
+    {
+        if (scale is null)
+        {
+            scale = Scale.Major(Constants.DEFAULT_TONAL_KEY);
+        }
+
+        var actionKinds = Enum.GetValues<PerformanceActionKind>();
+
+        for (int i = 0; i < scale.Intervals.Length; i++)
+        {
+            if (note.Equals(scale.GetNotes(i)))
+            {
+                return new PerformanceActionKind[] { actionKinds[i] };
+            }
+            else if (note.Equals(scale.GetNotes(i).Sharp(1)))
+            {
+                return new PerformanceActionKind[] { actionKinds[i], PerformanceActionKind.SHARP };
+            }
+            else if (note.Equals(scale.GetNotes(i).ChangeOctave(1)))
+            {
+                return new PerformanceActionKind[] { actionKinds[i], PerformanceActionKind.OCTAVE_UP };
+            }
+            else if (note.Equals(scale.GetNotes(i).Sharp(1).ChangeOctave(1)))
+            {
+                return new PerformanceActionKind[] { actionKinds[i], PerformanceActionKind.SHARP, PerformanceActionKind.OCTAVE_UP };
+            }
+        }
+
+        return new PerformanceActionKind[] { };
+    }
+
     public static PerformanceActionKind ToPerformanceActionKind(this string actionName)
     {
         return actionName switch
@@ -57,15 +89,15 @@ public static class PerformanceActionKindExtension
 
 public enum PerformanceActionKind
 {
-    I,
-    II,
-    III,
-    IV,
+    I = 0,
+    II = 1,
+    III = 2,
+    IV = 3,
 
-    V,
-    VI,
-    VII,
-    VIII,
+    V = 4,
+    VI = 5,
+    VII = 6,
+    VIII = 7,
 
     // Modulation
     SHARP,
@@ -93,7 +125,7 @@ public sealed record PerformanceAction(PerformanceActionKind ActionKind, bool Is
     {
         if (scale is null)
         {
-            scale = Scale.Major(new TonalKey(MidiNote.C4));
+            scale = Scale.Major(Constants.DEFAULT_TONAL_KEY);
         }
 
         return ActionKind switch
