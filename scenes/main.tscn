@@ -10,4 +10,5 @@ script = ExtResource("1_tnfuc")
 [node name="PerformanceManager" type="Node" parent="."]
 script = ExtResource("2_tgkmn")
 
-[node name="PerformanceDebugUi" parent="." instance=ExtResource("3_dia4g")]
+[node name="PerformanceDebugUi" parent="." node_paths=PackedStringArray("PerformanceManager") instance=ExtResource("3_dia4g")]
+PerformanceManager = NodePath("../PerformanceManager")

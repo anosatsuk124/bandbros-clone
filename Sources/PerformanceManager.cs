@@ -6,8 +6,6 @@ using Godot;
 [GlobalClass]
 public partial class PerformanceManager : Node
 {
-    public static PerformanceManager Instance { get; private set; } = null;
-
     public Scale Scale { get => InputHandler.Scale; set => InputHandler.Scale = value; }
 
     public MidiChannel PlayerChannel { get => InputHandler.Channel; set => InputHandler.Channel = value; }
@@ -29,7 +27,6 @@ public partial class PerformanceManager : Node
 
     public override void _Ready()
     {
-        Instance = this;
         StreamPlayer = new SoundfontAudioStreamPlayer();
         AddChild(StreamPlayer);
 

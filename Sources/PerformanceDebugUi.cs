@@ -6,6 +6,7 @@ using MusicNotation;
 
 public partial class PerformanceDebugUi : Control
 {
+	[Export] public PerformanceManager PerformanceManager { get; set; }
 	private Button _toggleButton;
 
 	private Control _toToggleNode;
@@ -32,33 +33,33 @@ public partial class PerformanceDebugUi : Control
 
 	private void _onProgramInputTextChanged(string newText)
 	{
-		if (PerformanceManager.Instance is null) return;
+		if (PerformanceManager is null) return;
 
 		if (int.TryParse(newText, out int program))
 		{
-			var bank = PerformanceManager.Instance.Instruments[PerformanceManager.Instance.PlayerChannel].bank;
+			var bank = PerformanceManager.Instruments[PerformanceManager.PlayerChannel].bank;
 
-			PerformanceManager.Instance.SetInstrument(PerformanceManager.Instance.PlayerChannel, bank, program);
+			PerformanceManager.SetInstrument(PerformanceManager.PlayerChannel, bank, program);
 		}
 	}
 
 	private void _onBankInputTextChanged(string newText)
 	{
-		if (PerformanceManager.Instance is null) return;
+		if (PerformanceManager is null) return;
 
 		if (int.TryParse(newText, out int bank))
 		{
-			PerformanceManager.Instance.SetInstrument(PerformanceManager.Instance.PlayerChannel, bank);
+			PerformanceManager.SetInstrument(PerformanceManager.PlayerChannel, bank);
 		}
 	}
 
 	private void _onKeyInputTextChanged(string newText)
 	{
-		if (PerformanceManager.Instance is null) return;
+		if (PerformanceManager is null) return;
 
 		if (int.TryParse(newText, out int key))
 		{
-			PerformanceManager.Instance.Scale = MusicScale.Major(new TonalKey(new MidiNote(key)));
+			PerformanceManager.Scale = MusicScale.Major(new TonalKey(new MidiNote(key)));
 		}
 	}
 }

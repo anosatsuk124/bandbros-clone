@@ -5,6 +5,8 @@ namespace BandBrosClone;
 using Godot;
 
 using BandBrosClone.MusicNotation;
+using System;
+
 
 public static class PerformanceActionKindExtension
 {
@@ -127,15 +129,30 @@ public abstract partial class PerformanceActionHandler : Node
         this.SoundfontPlayer = soundfontPlayer;
     }
 
+    private MidiNote?[] _currentPlayingActions = new MidiNote?[Enum.GetValues<PerformanceActionKind>().Length];
+
     private void _playNoteWithInputAction(PerformanceAction action, PerformanceActionKind actionKind, MidiNote note)
     {
         if (action.IsActionPressed(actionKind))
         {
+            if (_currentPlayingActions[(int)actionKind] is not null)
+            {
+                SoundfontPlayer.PlayNoteOff(Channel, _currentPlayingActions[(int)actionKind]);
+                _currentPlayingActions[(int)actionKind] = null;
+            }
+
             SoundfontPlayer.PlayNoteOn(Channel, note, 100);
+            _currentPlayingActions[(int)actionKind] = note;
         }
         if (action.IsActionReleased(actionKind))
         {
+            if (_currentPlayingActions[(int)actionKind] is not null)
+            {
+                SoundfontPlayer.PlayNoteOff(Channel, _currentPlayingActions[(int)actionKind]);
+            }
+
             SoundfontPlayer.PlayNoteOff(Channel, note);
+            _currentPlayingActions[(int)actionKind] = null;
         }
     }
 
@@ -165,21 +182,21 @@ public abstract partial class PerformanceActionHandler : Node
 
     public void PerformHandler(PerformanceAction action)
     {
-        _modulateWithAction(action);
-
-        if (action.ActionKind is PerformanceActionKind.SHARP || action.ActionKind is PerformanceActionKind.OCTAVE_UP)
+        if (action.ActionKind.Equals(PerformanceActionKind.SHARP) || action.ActionKind.Equals(PerformanceActionKind.OCTAVE_UP))
         {
+            _modulateWithAction(action);
             return;
         }
 
-        _playNoteWithInputAction(action, PerformanceActionKind.I, action.ToMidiNote(_sharp, _octave, Scale));
-        _playNoteWithInputAction(action, PerformanceActionKind.II, action.ToMidiNote(_sharp, _octave, Scale));
-        _playNoteWithInputAction(action, PerformanceActionKind.III, action.ToMidiNote(_sharp, _octave, Scale));
-        _playNoteWithInputAction(action, PerformanceActionKind.IV, action.ToMidiNote(_sharp, _octave, Scale));
+        var note = action.ToMidiNote(_sharp, _octave, Scale);
 
-        _playNoteWithInputAction(action, PerformanceActionKind.V, action.ToMidiNote(_sharp, _octave, Scale));
-        _playNoteWithInputAction(action, PerformanceActionKind.VI, action.ToMidiNote(_sharp, _octave, Scale));
-        _playNoteWithInputAction(action, PerformanceActionKind.VII, action.ToMidiNote(_sharp, _octave, Scale));
-        _playNoteWithInputAction(action, PerformanceActionKind.VIII, action.ToMidiNote(_sharp, _octave, Scale));
+        _playNoteWithInputAction(action, PerformanceActionKind.I, note);
+        _playNoteWithInputAction(action, PerformanceActionKind.II, note);
+        _playNoteWithInputAction(action, PerformanceActionKind.III, note);
+        _playNoteWithInputAction(action, PerformanceActionKind.IV, note);
+        _playNoteWithInputAction(action, PerformanceActionKind.V, note);
+        _playNoteWithInputAction(action, PerformanceActionKind.VI, note);
+        _playNoteWithInputAction(action, PerformanceActionKind.VII, note);
+        _playNoteWithInputAction(action, PerformanceActionKind.VIII, note);
     }
 }
