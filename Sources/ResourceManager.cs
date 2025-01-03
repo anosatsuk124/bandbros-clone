@@ -1,19 +1,43 @@
 namespace BandBrosClone;
+
+using BandBrosClone.Utils;
 using Godot;
 
 public static class ResourceManager
 {
     public static string GetResourceAbsPath(string path)
     {
+        var resourcePrefix = "res://";
+        var userPrefix = "user://";
+
+        var userPath = userPrefix + path;
+        var resourcePath = resourcePrefix + path;
+
         if (OS.HasFeature("editor"))
         {
-            return ProjectSettings.GlobalizePath("res://resources/" + path);
+            return ProjectSettings.GlobalizePath(resourcePath);
         }
         else
         {
-            return OS.GetExecutablePath().GetBaseDir().PathJoin("resources").PathJoin(path);
+            if (FileAccess.FileExists(userPath))
+            {
+                return ProjectSettings.GlobalizePath(userPath);
+            }
+
+            if (!DirAccess.DirExistsAbsolute(userPath.GetBaseDir()))
+            {
+                if (DirAccess.MakeDirRecursiveAbsolute(userPath.GetBaseDir()) is not Error.Ok)
+                {
+                    GameManager.ReportError($"Failed to create directory: {userPath.GetBaseDir()}");
+                }
+            }
+
+            if (!FileUtils.CopyFile(resourcePath, userPath))
+            {
+                GameManager.ReportError($"Failed to copy resource file: {path}");
+            }
+
+            return ProjectSettings.GlobalizePath(userPrefix + path);
         }
     }
-
-    public static string GetSoundfontAbsPath(string path) => GetResourceAbsPath("soundfonts/" + path);
 }
