@@ -2,8 +2,9 @@ namespace BandBrosClone;
 
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
-public partial class ChartSequencer : IEnumerable<ChartNote>
+public partial class ChartSequencer : IEnumerable<(int, ChartNote)>
 {
     //TODO: Implement BPM, Time Signature, and Scale changes
 
@@ -14,13 +15,13 @@ public partial class ChartSequencer : IEnumerable<ChartNote>
         this.Chart = chart;
     }
 
-    public IEnumerator<ChartNote> GetEnumerator()
+    public IEnumerator<(int, ChartNote)> GetEnumerator()
     {
-        foreach (var track in Chart.Tracks)
+        foreach (var (idx, track) in Chart.Tracks.Select((track, idx) => (idx, track)))
         {
             foreach (var note in track.Notes)
             {
-                yield return note;
+                yield return (idx, note);
             }
         }
     }

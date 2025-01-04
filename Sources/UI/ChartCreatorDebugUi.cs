@@ -4,12 +4,13 @@ using BandBrosClone.MusicNotation;
 using Godot;
 using Melanchall.DryWetMidi.Core;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 
 public partial class ChartCreatorDebugUi : Control
 {
 	[Export] public PerformanceManager performanceManager;
-	[Export] public PerformanceActionHandlerBase actionHandler;
+	public PerformanceActionHandlerBase[] actionHandlers = new PerformanceActionHandlerBase[Constants.MAX_MIDI_CHANNEL_COUNT];
 
 	private Chart _chart;
 
@@ -34,6 +35,13 @@ public partial class ChartCreatorDebugUi : Control
 
 		_playButton = GetNode<Button>("%PlayButton");
 		_playButton.Pressed += _onPlayButtonPressed;
+
+		for (int i = 0; i < Constants.MAX_MIDI_CHANNEL_COUNT; i++)
+		{
+			actionHandlers[i] = new PerformanceActionHandlerBase();
+			actionHandlers[i].performanceManager = performanceManager;
+			AddChild(actionHandlers[i]);
+		}
 	}
 
 	public override void _ExitTree()
@@ -86,7 +94,16 @@ public partial class ChartCreatorDebugUi : Control
 
 		var sequencer = new ChartSequencer(_chart);
 
-		foreach (var note in sequencer)
+		foreach (var actionHandler in actionHandlers)
+		{
+			foreach (var chartTrack in _chart.Tracks)
+			{
+				GameManager.Info($"Setting scale to {chartTrack.Scale}");
+				actionHandler.Scale = chartTrack.Scale;
+			}
+		}
+
+		foreach (var (index, note) in sequencer)
 		{
 			if (!note.duration.Equals(0))
 			{
@@ -102,7 +119,7 @@ public partial class ChartCreatorDebugUi : Control
 						foreach (var actionKind in actionKinds)
 						{
 							GameManager.Info(actionKind.ToActionName());
-							actionHandler.PerformHandler(new PerformanceAction(actionKind, true, false), on.note.Velocity);
+							actionHandlers[index].PerformHandler(new PerformanceAction(actionKind, true, false), on.note.Velocity);
 						}
 						break;
 					}
@@ -112,7 +129,7 @@ public partial class ChartCreatorDebugUi : Control
 						foreach (var actionKind in actionKinds)
 						{
 							GameManager.Info(actionKind.ToActionName());
-							actionHandler.PerformHandler(new PerformanceAction(actionKind, false, true), new MidiNoteVelocity());
+							actionHandlers[index].PerformHandler(new PerformanceAction(actionKind, false, true), new MidiNoteVelocity());
 						}
 						break;
 					}

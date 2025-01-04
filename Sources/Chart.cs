@@ -4,6 +4,7 @@ namespace BandBrosClone;
 
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using System.Linq;
 using BandBrosClone.MusicNotation;
 using Melanchall.DryWetMidi.Core;
 using Melanchall.DryWetMidi.Interaction;
@@ -53,6 +54,21 @@ public class ChartTrack
     public void RemoveNoteAt(int index)
     {
         this.Notes.RemoveAt(index);
+    }
+
+    public void DetectScale()
+    {
+        var notes = this.Notes
+            .Where(note => note is ChartNoteOn)
+            .Select(note => note as ChartNoteOn)
+            .Select(note => note!.note.Note);
+
+        var scale = ScaleClass.DetectScale(notes);
+
+        if (scale is not null)
+        {
+            this.Scale = scale;
+        }
     }
 }
 
@@ -112,6 +128,7 @@ public class Chart
                 }
             }
 
+            chartTrack.DetectScale();
             chart.AddTrack(chartTrack);
         }
 

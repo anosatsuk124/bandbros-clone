@@ -15,8 +15,7 @@ public partial class PerformanceActionHandlerBase : Node
 
     public virtual MidiChannel Channel { get; } = new MidiChannel(0);
 
-    public Scale? Scale { get; set; } = null;
-
+    public Scale? Scale { get; set; } = Constants.DEFAULT_SCALE;
 
     private MidiNote?[] _currentPlayingActions = new MidiNote?[Enum.GetValues<PerformanceActionKind>().Length];
 

@@ -63,6 +63,9 @@ public sealed record MidiNoteNumber(int Note)
     public MidiNoteNumber Sharp() => new MidiNoteNumber(Note + 1);
     public MidiNoteNumber Flat() => new MidiNoteNumber(Note - 1);
     public MidiNoteNumber ChangeOctave(int octave) => new MidiNoteNumber(Note + octave * 12);
+
+    public int PitchClass => (Note % 12 + 12) % 12;
+
 }
 
 public sealed record MidiNote(MidiNoteNumber Note, MidiNoteVelocity Velocity)
