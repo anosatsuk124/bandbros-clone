@@ -1,26 +1,26 @@
+using System;
+
 namespace BandBrosClone.MusicNotation;
 
 public sealed record MidiInstrumet(int bank = 0, int program = 0);
 
 public sealed record MidiTimeSignature(int numerator, int denominator);
 
-/// <summary>
-/// Represents a MIDI tempo in microseconds per quarter note.
-/// </summary>
-/// <param name="tempo"></param>
 public sealed record MidiTempo(MidiTime microSecondsPerQuarterNote)
 {
     public MidiTempo(long tempo) : this(new MidiTime(tempo)) { }
 }
 
 /// <summary>
-/// Represents a MIDI time in microseconds.
+/// Represents a MIDI time in seconds.
 /// </summary>
 /// <param name="time"></param>
-public sealed record MidiTime(long time)
+public sealed record MidiTime(double time)
 {
     public MidiTime Add(MidiTime time) => new MidiTime(this.time + time.time);
-    public MidiTime Add(long time) => new MidiTime(this.time + time);
+    public MidiTime Add(double time) => new MidiTime(this.time + time);
+
+    public double ToSeconds() => Convert.ToDouble(time) / 10000 / 1000;
 }
 
 

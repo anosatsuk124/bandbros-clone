@@ -1,5 +1,6 @@
 namespace BandBrosClone;
 
+using BandBrosClone.MusicNotation;
 using Godot;
 using Melanchall.DryWetMidi.Core;
 using System.IO;
@@ -7,11 +8,16 @@ using System.Text.Json;
 
 public partial class ChartCreatorDebugUi : Control
 {
-	private Chart chart;
+	[Export] public PerformanceManager performanceManager;
+	[Export] public PerformanceActionHandlerBase actionHandler;
+
+	private Chart _chart;
 
 	private LineEdit _midiFilePath;
 	private Button _convertButton;
 	private Button _pickMidiButton;
+
+	private Button _playButton;
 
 	private FileDialog _fileDialog;
 
@@ -25,6 +31,9 @@ public partial class ChartCreatorDebugUi : Control
 
 		_convertButton = GetNode<Button>("%ConvertButton");
 		_convertButton.Pressed += _onConvertButtonPressed;
+
+		_playButton = GetNode<Button>("%PlayButton");
+		_playButton.Pressed += _onPlayButtonPressed;
 	}
 
 	public override void _ExitTree()
@@ -62,30 +71,60 @@ public partial class ChartCreatorDebugUi : Control
 		var stream = new MemoryStream(bytes);
 		var midiFile = MidiFile.Read(stream);
 
-		chart = Chart.CreateChartFromMidiFile(midiFile);
+		_chart = Chart.CreateChartFromMidiFile(midiFile);
 
 		GameManager.Info("Chart created from MIDI file.");
+	}
 
-		GD.Print(chart.Tracks[0].Scale);
-
-		var saveFileDialog = new FileDialog();
-		AddChild(saveFileDialog);
-		saveFileDialog.FileMode = FileDialog.FileModeEnum.SaveFile;
-		saveFileDialog.UseNativeDialog = true;
-		saveFileDialog.Access = FileDialog.AccessEnum.Filesystem;
-		saveFileDialog.Filters = new string[] { "*.json" };
-		saveFileDialog.CurrentPath = _midiFilePath.Text.GetBaseName() + ".json";
-
-		saveFileDialog.FileSelected += (selected) =>
+	private async void _onPlayButtonPressed()
+	{
+		if (_chart is null)
 		{
-			var json = JsonSerializer.Serialize(chart);
-			var memStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
-			var saveFile = Godot.FileAccess.Open(selected, Godot.FileAccess.ModeFlags.Write);
-			saveFile.StoreBuffer(memStream.ToArray());
-			saveFile.Close();
-			saveFileDialog.QueueFree();
-		};
+			GameManager.Warn("No chart to play.");
+			return;
+		}
 
-		saveFileDialog.PopupCentered();
+		var sequencer = new ChartSequencer(_chart);
+
+		foreach (var note in sequencer)
+		{
+			if (!note.duration.Equals(0))
+			{
+				var duration = note.duration.time;
+				await ToSignal(GetTree().CreateTimer(duration), Timer.SignalName.Timeout);
+			}
+
+			switch (note)
+			{
+				case ChartNoteOn on:
+					{
+						var actionKinds = PerformanceActionKindExtension.FromMidiNote(on.note.Note);
+						foreach (var actionKind in actionKinds)
+						{
+							GameManager.Info(actionKind.ToActionName());
+							actionHandler.PerformHandler(new PerformanceAction(actionKind, true, false), on.note.Velocity);
+						}
+						break;
+					}
+				case ChartNoteOff off:
+					{
+						var actionKinds = PerformanceActionKindExtension.FromMidiNote(off.note.Note);
+						foreach (var actionKind in actionKinds)
+						{
+							GameManager.Info(actionKind.ToActionName());
+							actionHandler.PerformHandler(new PerformanceAction(actionKind, false, true), new MidiNoteVelocity());
+						}
+						break;
+					}
+				default:
+					{
+						GameManager.Warn($"Unknown note type: {note.GetType().Name}");
+						break;
+					}
+			}
+		}
+
+		await ToSignal(GetTree().CreateTimer(1), Timer.SignalName.Timeout);
+		performanceManager.Reset();
 	}
 }

@@ -6,9 +6,9 @@ using Godot;
 [GlobalClass]
 public partial class PerformanceManager : Node
 {
-    public Scale Scale { get => InputHandler.Scale; set => InputHandler.Scale = value; }
+    public Scale Scale { get; set; } = Constants.DEFAULT_SCALE;
 
-    public MidiChannel PlayerChannel { get => InputHandler.Channel; set => InputHandler.Channel = value; }
+    public MidiChannel PlayerChannel { get; set; } = new MidiChannel(0);
 
     public MidiInstrumet[] Instruments
     {
@@ -19,11 +19,11 @@ public partial class PerformanceManager : Node
     public SoundfontPlayer SoundfontPlayer { get; private set; }
     public AudioStreamPlayer StreamPlayer { get; set; }
 
-    public InputHandler InputHandler { get; private set; }
-
     public void Play() => SoundfontPlayer.Play();
     public void Stop() => SoundfontPlayer.Stop();
     public void TogglePlay() => SoundfontPlayer.Toggle();
+
+    public void Reset() => SoundfontPlayer.Reset();
 
     public override void _Ready()
     {
@@ -32,9 +32,6 @@ public partial class PerformanceManager : Node
 
         SoundfontPlayer = new SoundfontPlayer(StreamPlayer);
         AddChild(SoundfontPlayer);
-
-        InputHandler = new InputHandler(SoundfontPlayer);
-        AddChild(InputHandler);
     }
 
     public void SetInstrument(MidiChannel channel, int bank, int program = 0)

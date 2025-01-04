@@ -80,6 +80,11 @@ public partial class SoundfontPlayer : Node
 		Synthesizer.Reset();
 	}
 
+	public void Reset()
+	{
+		Synthesizer.Reset();
+	}
+
 	public void Toggle()
 	{
 		IsPlaying = !IsPlaying;

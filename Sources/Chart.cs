@@ -6,22 +6,23 @@ using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using BandBrosClone.MusicNotation;
 using Melanchall.DryWetMidi.Core;
+using Melanchall.DryWetMidi.Interaction;
 using ScaleClass = MusicNotation.Scale;
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "$typeKind")]
-[JsonDerivedType(typeof(ChartNoteHold), "noteHold")]
-[JsonDerivedType(typeof(ChartNoteRest), "noteRest")]
+[JsonDerivedType(typeof(ChartNoteOn), "noteOn")]
+[JsonDerivedType(typeof(ChartNoteOff), "noteOff")]
 [JsonDerivedType(typeof(ChartNoteChangeTempo), "changeTempo")]
 [JsonDerivedType(typeof(ChartNoteChangeTimeSignature), "changeTimeSignature")]
 [JsonDerivedType(typeof(ChartNoteChangeScale), "changeScale")]
 [JsonDerivedType(typeof(ChartNoteChangeInstrument), "changeInstrument")]
-public abstract record ChartNote;
-public sealed record ChartNoteHold(MidiChannel channel, MidiNote note, MidiTime duration) : ChartNote;
-public sealed record ChartNoteRest(MidiTime duration) : ChartNote;
-public sealed record ChartNoteChangeTempo(MidiTempo MidiTempo) : ChartNote;
-public sealed record ChartNoteChangeTimeSignature(MidiTimeSignature timeSignature) : ChartNote;
-public sealed record ChartNoteChangeScale(ScaleClass scale) : ChartNote;
-public sealed record ChartNoteChangeInstrument(MidiChannel channel, MidiInstrumet instrument) : ChartNote;
+public abstract record ChartNote(MidiTime duration);
+public sealed record ChartNoteOn(MidiChannel channel, MidiNote note, MidiTime duration) : ChartNote(duration);
+public sealed record ChartNoteOff(MidiChannel channel, MidiNoteNumber note, MidiTime duration) : ChartNote(duration);
+public sealed record ChartNoteChangeTempo(MidiTempo MidiTempo, MidiTime duration) : ChartNote(duration);
+public sealed record ChartNoteChangeTimeSignature(MidiTimeSignature timeSignature, MidiTime duration) : ChartNote(duration);
+public sealed record ChartNoteChangeScale(ScaleClass scale, MidiTime duration) : ChartNote(duration);
+public sealed record ChartNoteChangeInstrument(MidiChannel channel, MidiInstrumet instrument, MidiTime duration) : ChartNote(duration);
 
 public class ChartTrack
 {
@@ -77,43 +78,37 @@ public class Chart
     {
         var chart = new Chart();
 
+        var tempoMap = midiFile.GetTempoMap();
+
+
         foreach (var track in midiFile.GetTrackChunks())
         {
             var chartTrack = new ChartTrack();
 
-            Dictionary<MidiNote, ChartNoteHold> currentNote2Time = new();
-
             foreach (var midiEvent in track.Events)
             {
-                foreach (var note2Time in currentNote2Time)
-                {
-                    // Add the delta time to the duration of the note to keep track of the time it has been playing.
-                    currentNote2Time[note2Time.Key] = note2Time.Value with { duration = note2Time.Value.duration.Add(midiEvent.DeltaTime) };
-                }
+                var metricTimeSpan = TimeConverter.ConvertTo<MetricTimeSpan>(new MidiTimeSpan(midiEvent.DeltaTime) as ITimeSpan, tempoMap);
+                var sec = new MidiTime(metricTimeSpan.TotalSeconds);
 
                 if (midiEvent is SetTempoEvent setTempo)
                 {
-                    chartTrack.AddNote(new ChartNoteChangeTempo(new MidiTempo(setTempo.MicrosecondsPerQuarterNote)));
+                    chartTrack.AddNote(new ChartNoteChangeTempo(new MidiTempo(setTempo.MicrosecondsPerQuarterNote), sec));
                 }
                 else if (midiEvent is TimeSignatureEvent timeSignature)
                 {
-                    chartTrack.AddNote(new ChartNoteChangeTimeSignature(new MidiTimeSignature(timeSignature.Numerator, timeSignature.Denominator)));
+                    chartTrack.AddNote(new ChartNoteChangeTimeSignature(new MidiTimeSignature(timeSignature.Numerator, timeSignature.Denominator), sec));
                 }
                 else if (midiEvent is NoteOnEvent noteOn)
                 {
-                    currentNote2Time.TryAdd(new MidiNote(noteOn.NoteNumber), new ChartNoteHold(new MidiChannel(noteOn.Channel), new MidiNote(noteOn.NoteNumber, noteOn.Velocity), new MidiTime(0)));
+                    chartTrack.AddNote(new ChartNoteOn(new MidiChannel(noteOn.Channel), new MidiNote(noteOn.NoteNumber, noteOn.Velocity), sec));
                 }
                 else if (midiEvent is NoteOffEvent noteOff)
                 {
-                    if (currentNote2Time.TryGetValue(new MidiNote(noteOff.NoteNumber), out var note))
-                    {
-                        chartTrack.AddNote(note);
-                        currentNote2Time.Remove(new MidiNote(noteOff.NoteNumber));
-                    }
+                    chartTrack.AddNote(new ChartNoteOff(new MidiChannel(noteOff.Channel), new MidiNoteNumber(noteOff.NoteNumber), sec));
                 }
                 else if (midiEvent is ProgramChangeEvent programChange)
                 {
-                    chartTrack.AddNote(new ChartNoteChangeInstrument(new MidiChannel(programChange.Channel), new MidiInstrumet(programChange.ProgramNumber)));
+                    chartTrack.AddNote(new ChartNoteChangeInstrument(new MidiChannel(programChange.Channel), new MidiInstrumet(programChange.ProgramNumber), sec));
                 }
             }
 

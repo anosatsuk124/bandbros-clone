@@ -9,11 +9,11 @@ using MeltySynth;
 using BandBrosClone.MusicNotation;
 
 [GlobalClass]
-public partial class InputHandler : PerformanceActionHandler
+public partial class InputHandler : PerformanceActionHandlerBase
 {
-    public InputHandler(SoundfontPlayer soundfontPlayer, MidiChannel? channel = null) : base(soundfontPlayer, channel) { }
+    public override MidiChannel Channel { get => performanceManager!.PlayerChannel; }
 
-    public override void _PhysicsProcess(double delta)
+    public override void _Process(double delta)
     {
         _inputHandler();
     }
