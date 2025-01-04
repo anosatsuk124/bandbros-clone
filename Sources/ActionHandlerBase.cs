@@ -5,19 +5,22 @@ using Godot;
 using MusicNotation;
 using System;
 
-
-[GlobalClass]
-public partial class PerformanceActionHandlerBase : Node
+public abstract partial class ActionHandlerBase : Node
 {
     [Export] public PerformanceManager? performanceManager;
 
     private SoundfontPlayer _soundfontPlayer { get => performanceManager!.SoundfontPlayer; }
 
-    public virtual MidiChannel Channel { get; } = new MidiChannel(0);
+    public abstract MidiChannel Channel { get; set; }
 
     public Scale? Scale { get; set; } = Constants.DEFAULT_SCALE;
 
     private MidiNote?[] _currentPlayingActions = new MidiNote?[Enum.GetValues<PerformanceActionKind>().Length];
+
+    public void SetChannel(MidiChannel channel)
+    {
+        Channel = channel;
+    }
 
     private void _playNoteWithInputAction(PerformanceAction action, PerformanceActionKind actionKind, MidiNote note)
     {

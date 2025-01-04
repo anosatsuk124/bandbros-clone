@@ -9,9 +9,9 @@ using MeltySynth;
 using BandBrosClone.MusicNotation;
 
 [GlobalClass]
-public partial class InputHandler : PerformanceActionHandlerBase
+public sealed partial class InputHandler : ActionHandlerBase
 {
-    public override MidiChannel Channel { get => performanceManager!.PlayerChannel; }
+    public override MidiChannel Channel { get => performanceManager!.PlayerChannel; set { performanceManager!.PlayerChannel = value; } }
 
     public override void _Process(double delta)
     {

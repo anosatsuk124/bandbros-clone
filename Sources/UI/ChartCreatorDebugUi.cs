@@ -10,7 +10,7 @@ using System.Text.Json;
 public partial class ChartCreatorDebugUi : Control
 {
 	[Export] public PerformanceManager performanceManager;
-	public PerformanceActionHandlerBase[] actionHandlers = new PerformanceActionHandlerBase[Constants.MAX_MIDI_CHANNEL_COUNT];
+	public ActionHandlerBase[] actionHandlers = new ActionHandlerBase[Constants.MAX_MIDI_CHANNEL_COUNT];
 
 	private Chart _chart;
 
@@ -38,7 +38,7 @@ public partial class ChartCreatorDebugUi : Control
 
 		for (int i = 0; i < Constants.MAX_MIDI_CHANNEL_COUNT; i++)
 		{
-			actionHandlers[i] = new PerformanceActionHandlerBase();
+			actionHandlers[i] = new PerformanceActionHandler();
 			actionHandlers[i].performanceManager = performanceManager;
 			AddChild(actionHandlers[i]);
 		}
@@ -82,6 +82,8 @@ public partial class ChartCreatorDebugUi : Control
 		_chart = Chart.CreateChartFromMidiFile(midiFile);
 
 		GameManager.Info("Chart created from MIDI file.");
+
+		Godot.FileAccess.Open(_midiFilePath.Text.GetBaseDir().PathJoin("chart.json"), Godot.FileAccess.ModeFlags.Write).StoreString(JsonSerializer.Serialize(_chart));
 	}
 
 	private async void _onPlayButtonPressed()
@@ -94,17 +96,19 @@ public partial class ChartCreatorDebugUi : Control
 
 		var sequencer = new ChartSequencer(_chart);
 
-		foreach (var actionHandler in actionHandlers)
+		for (int idx = 0; idx < _chart.Tracks.Count; idx++)
 		{
-			foreach (var chartTrack in _chart.Tracks)
-			{
-				GameManager.Info($"Setting scale to {chartTrack.Scale}");
-				actionHandler.Scale = chartTrack.Scale;
-			}
+			var track = _chart.Tracks[idx];
+			actionHandlers[idx].Scale = track.Scale;
+			GameManager.Info($"Setting scale {track.Scale}");
+			actionHandlers[idx].Channel = new MidiChannel(idx);
+			GameManager.Info($"Setting channel {actionHandlers[idx].Channel}");
 		}
 
 		foreach (var (index, note) in sequencer)
 		{
+			GameManager.Info($"duration: {note.duration}");
+			var actionHandler = actionHandlers[index];
 			if (!note.duration.Equals(0))
 			{
 				var duration = note.duration.time;
@@ -115,22 +119,28 @@ public partial class ChartCreatorDebugUi : Control
 			{
 				case ChartNoteOn on:
 					{
-						var actionKinds = PerformanceActionKindExtension.FromMidiNote(on.note.Note);
+						var actionKinds = PerformanceActionKindExtension.FromMidiNote(on.note.Note, actionHandler.Scale);
 						foreach (var actionKind in actionKinds)
 						{
 							GameManager.Info(actionKind.ToActionName());
-							actionHandlers[index].PerformHandler(new PerformanceAction(actionKind, true, false), on.note.Velocity);
+							actionHandler.PerformHandler(new PerformanceAction(actionKind, true, false), on.note.Velocity);
 						}
 						break;
 					}
 				case ChartNoteOff off:
 					{
-						var actionKinds = PerformanceActionKindExtension.FromMidiNote(off.note.Note);
+						var actionKinds = PerformanceActionKindExtension.FromMidiNote(off.note.Note, actionHandler.Scale);
 						foreach (var actionKind in actionKinds)
 						{
 							GameManager.Info(actionKind.ToActionName());
-							actionHandlers[index].PerformHandler(new PerformanceAction(actionKind, false, true), new MidiNoteVelocity());
+							actionHandler.PerformHandler(new PerformanceAction(actionKind, false, true), new MidiNoteVelocity());
 						}
+						break;
+					}
+				case ChartNoteChangeInstrument changeInstrument:
+					{
+						performanceManager.SetInstrument(actionHandler.Channel, changeInstrument.instrument.bank, changeInstrument.instrument.program);
+						GameManager.Info($"Changing instrument to {changeInstrument.instrument}");
 						break;
 					}
 				default:

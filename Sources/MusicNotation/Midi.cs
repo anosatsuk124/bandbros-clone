@@ -26,7 +26,7 @@ public sealed record MidiTime(double time)
 
 public sealed record MidiChannel
 {
-    public int channel { get; }
+    public int Channel { get; private set; }
 
     public MidiChannel(int channel)
     {
@@ -34,9 +34,10 @@ public sealed record MidiChannel
         {
             throw new System.ArgumentOutOfRangeException("MIDI channel must be between 0 and 15.");
         }
+        Channel = channel;
     }
 
-    public static implicit operator int(MidiChannel channel) => channel.channel;
+    public static implicit operator int(MidiChannel channel) => channel.Channel;
 }
 
 public sealed record MidiNoteVelocity(int velocity = 100)

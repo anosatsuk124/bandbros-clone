@@ -72,9 +72,30 @@ public class ChartTrack
     }
 }
 
+public class ChartTracks
+{
+    public ChartTrack this[int index] { get => _tracks[index]; set => _tracks[index] = value; }
+    public int Count { get => _tracks.Count; }
+    public void Add(ChartTrack track)
+    {
+        if (_tracks.Count < MAX_TRACKS)
+        {
+            _tracks.Add(track);
+        }
+    }
+    public void RemoveAt(int index)
+    {
+        _tracks.RemoveAt(index);
+    }
+
+    private List<ChartTrack> _tracks = new List<ChartTrack>();
+    private readonly static int MAX_TRACKS = Constants.MAX_CHART_TRACK_COUNT;
+
+}
+
 public class Chart
 {
-    public List<ChartTrack> Tracks { get; private set; } = new List<ChartTrack>();
+    public ChartTracks Tracks { get; private set; } = new ChartTracks();
 
     public Chart()
     {
@@ -95,7 +116,6 @@ public class Chart
         var chart = new Chart();
 
         var tempoMap = midiFile.GetTempoMap();
-
 
         foreach (var track in midiFile.GetTrackChunks())
         {

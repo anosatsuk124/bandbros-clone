@@ -60,74 +60,26 @@ public sealed record Scale(MidiNoteNumber Key, int I, int II, int III, int IV, i
             .Contains(diff);
     }
 
-    // --------------------------------------------------------------------
-    // DetectScale:
-    //   1) 0~11のすべてのピッチクラス×(メジャー,ナチュラルマイナー)を用意
-    //   2) スコア(含まれるノート数)が最大のピッチクラス/スケール種を特定
-    //   3) 入力にあるノートの中で「そのピッチクラスと一致」するもののうち、
-    //      最も低いノート値をルート(Key)にしてスケールを作って返却
-    // --------------------------------------------------------------------
     public static Scale? DetectScale(IEnumerable<MidiNoteNumber> notes)
     {
-        if (notes is null) return null;
+        if (notes.Count().Equals(0)) return null;
 
-        // (1) すべての候補スケール (24通り: 12 pc × 2種)
-        //     それぞれのスコアを計算
-        int bestScore = -1;
-        (int pitchClass, bool isMajor) bestCandidate = (0, true);
-
-        for (int pc = 0; pc < 12; pc++)
-        {
-            // Major
-            {
-                var scale = Major(new MidiNoteNumber(pc));
-                int score = notes.Count(n => scale.Contains(n.Note));
-                if (score > bestScore)
-                {
-                    bestScore = score;
-                    bestCandidate = (pc, true);
-                }
-            }
-            // NaturalMinor
-            {
-                var scale = NaturalMinor(new MidiNoteNumber(pc));
-                int score = notes.Count(n => scale.Contains(n.Note));
-                if (score > bestScore)
-                {
-                    bestScore = score;
-                    bestCandidate = (pc, false);
-                }
-            }
-        }
-
-        // (2) bestCandidate で特定されたピッチクラスを持つノートのうち、
-        //     最も低いノート値を取得する
-        var (bestPc, isMajorOrMinor) = bestCandidate;
-
-        var matchingNotes = notes
-            .Where(n => n.Note == bestPc)
+        var lowestNoteValue = notes
             .Select(n => n.Note)
-            .ToList();
+            .Min();
 
-        // もし "同じピッチクラス" を持つノートが一つもなかったら、
-        // ピッチクラスだけわかったけど該当実音がない、という矛盾したケース。
-        // その場合はオクターブなしの pc だけを Key にして返す
-        if (!matchingNotes.Any())
+        MidiNoteNumber actualKey = Constants.DEFAULT_SCALE.Key;
+
+        for (int i = 0; i < 128; i += 12)
         {
-            var fallbackKey = new MidiNoteNumber(bestPc + MidiNoteNumber.C4);
-            return isMajorOrMinor
-                ? Major(fallbackKey)
-                : NaturalMinor(fallbackKey);
+            if (lowestNoteValue >= i && lowestNoteValue < i + 12)
+            {
+                actualKey = i;
+                break;
+            }
         }
 
-        // (3) "最も低い" ノート値を取る
-        int lowestNoteValue = matchingNotes.Min();
-        var actualKey = new MidiNoteNumber(lowestNoteValue);
-
-        // (4) 実際のスケールを生成して返却
-        return isMajorOrMinor
-            ? Major(actualKey)
-            : NaturalMinor(actualKey);
+        return Scale.Major(actualKey);
     }
 
 }

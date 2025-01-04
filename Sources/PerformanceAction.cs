@@ -8,7 +8,7 @@ using System;
 
 public static class PerformanceActionKindExtension
 {
-    public static PerformanceActionKind[] FromMidiNote(MidiNoteNumber note, int sharp = 0, int octave = 0, Scale? scale = null)
+    public static PerformanceActionKind[] FromMidiNote(MidiNoteNumber note, Scale? scale = null)
     {
         if (scale is null)
         {

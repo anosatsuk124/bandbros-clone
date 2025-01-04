@@ -8,6 +8,8 @@ public static class Constants
     public static readonly int MAX_MIDI_CHANNEL = 15;
     public static readonly int MAX_MIDI_CHANNEL_COUNT = MAX_MIDI_CHANNEL + 1;
 
+    public static readonly int MAX_CHART_TRACK_COUNT = MAX_MIDI_CHANNEL_COUNT;
+
     public static readonly MidiTempo DEFAULT_TEMPO = new MidiTempo(90 * 1000 * 1000);
 
     public static readonly MidiTime DEFAULT_TICKS_PER_QUARTER_NOTE = new MidiTime(98);

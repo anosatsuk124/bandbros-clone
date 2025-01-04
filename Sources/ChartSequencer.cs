@@ -17,8 +17,9 @@ public partial class ChartSequencer : IEnumerable<(int, ChartNote)>
 
     public IEnumerator<(int, ChartNote)> GetEnumerator()
     {
-        foreach (var (idx, track) in Chart.Tracks.Select((track, idx) => (idx, track)))
+        for (int idx = 0; idx < Chart.Tracks.Count; idx++)
         {
+            var track = Chart.Tracks[idx];
             foreach (var note in track.Notes)
             {
                 yield return (idx, note);
