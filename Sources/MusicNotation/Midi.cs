@@ -26,15 +26,14 @@ public sealed record MidiTime(long time)
 
 public sealed record MidiChannel
 {
-    public int channel;
+    public int channel { get; }
+
     public MidiChannel(int channel)
     {
         if (channel < 0 || channel > Constants.MAX_MIDI_CHANNEL)
         {
             throw new System.ArgumentOutOfRangeException("MIDI channel must be between 0 and 15.");
         }
-
-        this.channel = channel;
     }
 
     public static implicit operator int(MidiChannel channel) => channel.channel;

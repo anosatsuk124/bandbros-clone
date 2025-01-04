@@ -19,7 +19,7 @@ public static class PerformanceActionKindExtension
 
         var actionKinds = Enum.GetValues<PerformanceActionKind>();
 
-        for (int i = 0; i < scale.Intervals.Length; i++)
+        for (int i = 0; i < scale.Size; i++)
         {
             if (note.Equals(scale.GetNotes(i)))
             {

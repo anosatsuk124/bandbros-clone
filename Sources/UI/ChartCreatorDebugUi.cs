@@ -3,7 +3,7 @@ namespace BandBrosClone;
 using Godot;
 using Melanchall.DryWetMidi.Core;
 using System.IO;
-
+using System.Text.Json;
 
 public partial class ChartCreatorDebugUi : Control
 {
@@ -41,13 +41,14 @@ public partial class ChartCreatorDebugUi : Control
 		AddChild(_fileDialog);
 
 		_fileDialog.FileMode = FileDialog.FileModeEnum.OpenFile;
+		_fileDialog.UseNativeDialog = true;
 		_fileDialog.Access = FileDialog.AccessEnum.Filesystem;
 
 		_fileDialog.Filters = new string[] { "*.mid", "*.midi" };
 
-		_fileDialog.Confirmed += () =>
+		_fileDialog.FileSelected += (selected) =>
 		{
-			_midiFilePath.Text = _fileDialog.CurrentPath;
+			_midiFilePath.Text = selected;
 			_fileDialog.QueueFree();
 		};
 
@@ -65,12 +66,26 @@ public partial class ChartCreatorDebugUi : Control
 
 		GameManager.Info("Chart created from MIDI file.");
 
-		foreach (var track in chart.Tracks)
+		GD.Print(chart.Tracks[0].Scale);
+
+		var saveFileDialog = new FileDialog();
+		AddChild(saveFileDialog);
+		saveFileDialog.FileMode = FileDialog.FileModeEnum.SaveFile;
+		saveFileDialog.UseNativeDialog = true;
+		saveFileDialog.Access = FileDialog.AccessEnum.Filesystem;
+		saveFileDialog.Filters = new string[] { "*.json" };
+		saveFileDialog.CurrentPath = _midiFilePath.Text.GetBaseName() + ".json";
+
+		saveFileDialog.FileSelected += (selected) =>
 		{
-			foreach (var note in track.Notes)
-			{
-				GD.Print(note);
-			}
-		}
+			var json = JsonSerializer.Serialize(chart);
+			var memStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
+			var saveFile = Godot.FileAccess.Open(selected, Godot.FileAccess.ModeFlags.Write);
+			saveFile.StoreBuffer(memStream.ToArray());
+			saveFile.Close();
+			saveFileDialog.QueueFree();
+		};
+
+		saveFileDialog.PopupCentered();
 	}
 }

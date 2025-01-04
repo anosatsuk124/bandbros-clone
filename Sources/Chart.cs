@@ -3,11 +3,18 @@ namespace BandBrosClone;
 #nullable enable
 
 using System.Collections.Generic;
-using System.Xml.Serialization;
+using System.Text.Json.Serialization;
 using BandBrosClone.MusicNotation;
 using Melanchall.DryWetMidi.Core;
 using ScaleClass = MusicNotation.Scale;
 
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "$typeKind")]
+[JsonDerivedType(typeof(ChartNoteHold), "noteHold")]
+[JsonDerivedType(typeof(ChartNoteRest), "noteRest")]
+[JsonDerivedType(typeof(ChartNoteChangeTempo), "changeTempo")]
+[JsonDerivedType(typeof(ChartNoteChangeTimeSignature), "changeTimeSignature")]
+[JsonDerivedType(typeof(ChartNoteChangeScale), "changeScale")]
+[JsonDerivedType(typeof(ChartNoteChangeInstrument), "changeInstrument")]
 public abstract record ChartNote;
 public sealed record ChartNoteHold(MidiChannel channel, MidiNote note, MidiTime duration) : ChartNote;
 public sealed record ChartNoteRest(MidiTime duration) : ChartNote;
