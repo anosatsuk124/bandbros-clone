@@ -10,7 +10,7 @@ using System;
 
 public static class PerformanceActionKindExtension
 {
-    public static PerformanceActionKind[] FromMidiNote(this PerformanceActionKind _, MidiNote note, int sharp = 0, int octave = 0, Scale? scale = null)
+    public static PerformanceActionKind[] FromMidiNote(this PerformanceActionKind _, MidiNoteNumber note, int sharp = 0, int octave = 0, Scale? scale = null)
     {
         if (scale is null)
         {
@@ -25,7 +25,7 @@ public static class PerformanceActionKindExtension
             {
                 return new PerformanceActionKind[] { actionKinds[i] };
             }
-            else if (note.Equals(scale.GetNotes(i).Sharp(1)))
+            else if (note.Equals(scale.GetNotes(i).Transpose(1)))
             {
                 return new PerformanceActionKind[] { actionKinds[i], PerformanceActionKind.SHARP };
             }
@@ -33,7 +33,7 @@ public static class PerformanceActionKindExtension
             {
                 return new PerformanceActionKind[] { actionKinds[i], PerformanceActionKind.OCTAVE_UP };
             }
-            else if (note.Equals(scale.GetNotes(i).Sharp(1).ChangeOctave(1)))
+            else if (note.Equals(scale.GetNotes(i).Transpose(1).ChangeOctave(1)))
             {
                 return new PerformanceActionKind[] { actionKinds[i], PerformanceActionKind.SHARP, PerformanceActionKind.OCTAVE_UP };
             }
@@ -121,7 +121,7 @@ public sealed record PerformanceAction(PerformanceActionKind ActionKind, bool Is
         return ActionKind.ToActionName();
     }
 
-    public MidiNote ToMidiNote(int sharp = 0, int octave = 0, Scale? scale = null)
+    public MidiNoteNumber ToMidiNoteNumber(int sharp = 0, int octave = 0, Scale? scale = null)
     {
         if (scale is null)
         {
@@ -130,14 +130,14 @@ public sealed record PerformanceAction(PerformanceActionKind ActionKind, bool Is
 
         return ActionKind switch
         {
-            PerformanceActionKind.I => scale.GetNotes(0).Sharp(sharp).ChangeOctave(octave),
-            PerformanceActionKind.II => scale.GetNotes(1).Sharp(sharp).ChangeOctave(octave),
-            PerformanceActionKind.III => scale.GetNotes(2).Sharp(sharp).ChangeOctave(octave),
-            PerformanceActionKind.IV => scale.GetNotes(3).Sharp(sharp).ChangeOctave(octave),
-            PerformanceActionKind.V => scale.GetNotes(4).Sharp(sharp).ChangeOctave(octave),
-            PerformanceActionKind.VI => scale.GetNotes(5).Sharp(sharp).ChangeOctave(octave),
-            PerformanceActionKind.VII => scale.GetNotes(6).Sharp(sharp).ChangeOctave(octave),
-            PerformanceActionKind.VIII => scale.GetNotes(7).Sharp(sharp).ChangeOctave(octave),
+            PerformanceActionKind.I => scale.GetNotes(0).Transpose(sharp).ChangeOctave(octave),
+            PerformanceActionKind.II => scale.GetNotes(1).Transpose(sharp).ChangeOctave(octave),
+            PerformanceActionKind.III => scale.GetNotes(2).Transpose(sharp).ChangeOctave(octave),
+            PerformanceActionKind.IV => scale.GetNotes(3).Transpose(sharp).ChangeOctave(octave),
+            PerformanceActionKind.V => scale.GetNotes(4).Transpose(sharp).ChangeOctave(octave),
+            PerformanceActionKind.VI => scale.GetNotes(5).Transpose(sharp).ChangeOctave(octave),
+            PerformanceActionKind.VII => scale.GetNotes(6).Transpose(sharp).ChangeOctave(octave),
+            PerformanceActionKind.VIII => scale.GetNotes(7).Transpose(sharp).ChangeOctave(octave),
             _ => throw new System.NotImplementedException(),
         };
     }
@@ -212,7 +212,7 @@ public abstract partial class PerformanceActionHandler : Node
         }
     }
 
-    public void PerformHandler(PerformanceAction action)
+    public void PerformHandler(PerformanceAction action, MidiNoteVelocity velocity)
     {
         if (action.ActionKind.Equals(PerformanceActionKind.SHARP) || action.ActionKind.Equals(PerformanceActionKind.OCTAVE_UP))
         {
@@ -220,7 +220,8 @@ public abstract partial class PerformanceActionHandler : Node
             return;
         }
 
-        var note = action.ToMidiNote(_sharp, _octave, Scale);
+        var noteNum = action.ToMidiNoteNumber(_sharp, _octave, Scale);
+        var note = new MidiNote(noteNum, velocity);
 
         _playNoteWithInputAction(action, PerformanceActionKind.I, note);
         _playNoteWithInputAction(action, PerformanceActionKind.II, note);

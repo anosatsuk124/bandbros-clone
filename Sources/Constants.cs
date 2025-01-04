@@ -14,7 +14,7 @@ public static class Constants
 
     public static readonly MidiTimeSignature DEFAULT_TIME_SIGNATURE = new MidiTimeSignature(4, 4);
 
-    public static readonly TonalKey DEFAULT_TONAL_KEY = new TonalKey(MidiNote.C4);
+    public static readonly TonalKey DEFAULT_TONAL_KEY = new TonalKey(MidiNoteNumber.C4);
 
     public static readonly Scale DEFAULT_SCALE = Scale.Major(DEFAULT_TONAL_KEY);
 

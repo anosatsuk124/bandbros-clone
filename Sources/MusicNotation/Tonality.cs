@@ -2,7 +2,7 @@ using System;
 
 namespace BandBrosClone.MusicNotation;
 
-public sealed record TonalKey(MidiNote baseMidiNote);
+public sealed record TonalKey(MidiNoteNumber baseMidiNote);
 
 public sealed record Scale(TonalKey Key, int I, int II, int III, int IV, int V, int VI, int VII, int VIII)
 {
@@ -34,7 +34,7 @@ public sealed record Scale(TonalKey Key, int I, int II, int III, int IV, int V, 
         };
     }
 
-    public MidiNote GetNotes(int num)
+    public MidiNoteNumber GetNotes(int num)
     {
         return Key.baseMidiNote.Transpose(GetIntervalFromNumber(num));
     }

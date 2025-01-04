@@ -20,6 +20,8 @@ public partial class InputHandler : PerformanceActionHandler
 
     private bool[] _currentPlayingActions = new bool[Enum.GetValues<PerformanceActionKind>().Length];
 
+    private MidiNoteVelocity _currentVelocity = new MidiNoteVelocity(100);
+
     private void _inputHandler()
     {
         foreach (var action in Enum.GetValues<PerformanceActionKind>())
@@ -31,12 +33,12 @@ public partial class InputHandler : PerformanceActionHandler
 
             if (!isActionPlaying && isActionPressed)
             {
-                PerformHandler(new PerformanceAction(action, true, false));
+                PerformHandler(new PerformanceAction(action, true, false), _currentVelocity);
                 _currentPlayingActions[(int)action] = true;
             }
             else if (isActionPlaying && !isActionPressed)
             {
-                PerformHandler(new PerformanceAction(action, false, true));
+                PerformHandler(new PerformanceAction(action, false, true), _currentVelocity);
                 _currentPlayingActions[(int)action] = false;
             }
         }
