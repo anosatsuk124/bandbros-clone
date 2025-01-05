@@ -19,11 +19,19 @@ public partial class PerformanceManager : Node
     public SoundfontPlayer SoundfontPlayer { get; private set; }
     public AudioStreamPlayer StreamPlayer { get; set; }
 
+    public ulong CurrentTimeUsec { get => Time.GetTicksUsec() - _startTimeUsec; }
+
+    private ulong _startTimeUsec;
+
     public void Play() => SoundfontPlayer.Play();
     public void Stop() => SoundfontPlayer.Stop();
     public void TogglePlay() => SoundfontPlayer.Toggle();
 
-    public void Reset() => SoundfontPlayer.Reset();
+    public void Reset()
+    {
+        SoundfontPlayer.Reset();
+        _startTimeUsec = Time.GetTicksUsec();
+    }
 
     public override void _Ready()
     {
@@ -32,6 +40,8 @@ public partial class PerformanceManager : Node
 
         SoundfontPlayer = new SoundfontPlayer(StreamPlayer);
         AddChild(SoundfontPlayer);
+
+        _startTimeUsec = Time.GetTicksUsec();
     }
 
     public void SetInstrument(MidiChannel channel, int bank, int program = 0)

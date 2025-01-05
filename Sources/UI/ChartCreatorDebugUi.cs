@@ -6,6 +6,9 @@ using Melanchall.DryWetMidi.Core;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+
 
 public partial class ChartCreatorDebugUi : Control
 {
@@ -83,10 +86,12 @@ public partial class ChartCreatorDebugUi : Control
 
 		GameManager.Info("Chart created from MIDI file.");
 
-		Godot.FileAccess.Open(_midiFilePath.Text.GetBaseDir().PathJoin("chart.json"), Godot.FileAccess.ModeFlags.Write).StoreString(JsonSerializer.Serialize(_chart));
+		var json = JsonSerializer.Serialize(_chart);
+		var outFile = Godot.FileAccess.Open(_midiFilePath.Text.GetBaseDir().PathJoin("chart.json"), Godot.FileAccess.ModeFlags.Write);
+		outFile.StoreBuffer(json.ToUtf8Buffer());
 	}
 
-	private async void _onPlayButtonPressed()
+	private void _onPlayButtonPressed()
 	{
 		if (_chart is null)
 		{
@@ -94,64 +99,19 @@ public partial class ChartCreatorDebugUi : Control
 			return;
 		}
 
-		var sequencer = new ChartSequencer(_chart);
+		ChartTrackSequencerBase[] sequencers = new ChartTrackSequencerBase[_chart.Tracks.Count];
 
 		for (int idx = 0; idx < _chart.Tracks.Count; idx++)
 		{
-			var track = _chart.Tracks[idx];
-			actionHandlers[idx].Scale = track.Scale;
-			GameManager.Info($"Setting scale {track.Scale}");
-			actionHandlers[idx].Channel = new MidiChannel(idx);
-			GameManager.Info($"Setting channel {actionHandlers[idx].Channel}");
+			sequencers[idx] = new ChartTrackAutoPerformance(actionHandlers[idx], _chart.Tracks[idx]);
+			AddChild(sequencers[idx]);
 		}
 
-		foreach (var (index, note) in sequencer)
-		{
-			GameManager.Info($"duration: {note.duration}");
-			var actionHandler = actionHandlers[index];
-			if (!note.duration.Equals(0))
-			{
-				var duration = note.duration.time;
-				await ToSignal(GetTree().CreateTimer(duration), Timer.SignalName.Timeout);
-			}
-
-			switch (note)
-			{
-				case ChartNoteOn on:
-					{
-						var actionKinds = PerformanceActionKindExtension.FromMidiNote(on.note.Note, actionHandler.Scale);
-						foreach (var actionKind in actionKinds)
-						{
-							GameManager.Info(actionKind.ToActionName());
-							actionHandler.PerformHandler(new PerformanceAction(actionKind, true, false), on.note.Velocity);
-						}
-						break;
-					}
-				case ChartNoteOff off:
-					{
-						var actionKinds = PerformanceActionKindExtension.FromMidiNote(off.note.Note, actionHandler.Scale);
-						foreach (var actionKind in actionKinds)
-						{
-							GameManager.Info(actionKind.ToActionName());
-							actionHandler.PerformHandler(new PerformanceAction(actionKind, false, true), new MidiNoteVelocity());
-						}
-						break;
-					}
-				case ChartNoteChangeInstrument changeInstrument:
-					{
-						performanceManager.SetInstrument(actionHandler.Channel, changeInstrument.instrument.bank, changeInstrument.instrument.program);
-						GameManager.Info($"Changing instrument to {changeInstrument.instrument}");
-						break;
-					}
-				default:
-					{
-						GameManager.Warn($"Unknown note type: {note.GetType().Name}");
-						break;
-					}
-			}
-		}
-
-		await ToSignal(GetTree().CreateTimer(1), Timer.SignalName.Timeout);
 		performanceManager.Reset();
+
+		var notesArr = sequencers.Select(sequencer => sequencer.GetEnumerator()).ToArray();
+
+		var playEnumerators = sequencers.Select(sequencer => sequencer.Play(sequencer.chartTrack.Notes)).ToArray();
+		while (playEnumerators.Any(enumerator => enumerator.MoveNext())) ;
 	}
 }

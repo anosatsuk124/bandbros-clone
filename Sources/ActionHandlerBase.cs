@@ -81,8 +81,12 @@ public abstract partial class ActionHandlerBase : Node
         PerformHandler(new PerformanceAction(actionKind, false, true), new MidiNoteVelocity());
     }
 
-    public void PerformHandler(PerformanceAction action, MidiNoteVelocity velocity)
+    public void PerformHandler(PerformanceAction action, MidiNoteVelocity? velocity = null)
     {
+        if (velocity is null)
+        {
+            velocity = new MidiNoteVelocity();
+        }
         if (action.ActionKind.Equals(PerformanceActionKind.SHARP) || action.ActionKind.Equals(PerformanceActionKind.OCTAVE_UP))
         {
             _modulateWithAction(action);

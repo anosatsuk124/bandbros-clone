@@ -9,6 +9,8 @@ using BandBrosClone.MusicNotation;
 using Melanchall.DryWetMidi.Core;
 using Melanchall.DryWetMidi.Interaction;
 using ScaleClass = MusicNotation.Scale;
+using System;
+
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "$typeKind")]
 [JsonDerivedType(typeof(ChartNoteOn), "noteOn")]
@@ -34,6 +36,8 @@ public class ChartTrack
     public ScaleClass Scale { get; set; } = Constants.DEFAULT_SCALE;
 
     public List<ChartNote> Notes { get; set; } = new List<ChartNote>();
+
+    public MidiChannel Channel { get; set; } = new MidiChannel(0);
 
     public ChartTrack()
     {
@@ -74,23 +78,27 @@ public class ChartTrack
 
 public class ChartTracks
 {
-    public ChartTrack this[int index] { get => _tracks[index]; set => _tracks[index] = value; }
-    public int Count { get => _tracks.Count; }
+    public ChartTrack this[int index] { get => _Tracks[index]; set => _Tracks[index] = value; }
+    public int Count { get => _Tracks.Count; }
     public void Add(ChartTrack track)
     {
-        if (_tracks.Count < MAX_TRACKS)
+        if (_Tracks.Count < MAX_TRACKS)
         {
-            _tracks.Add(track);
+            _Tracks.Add(track);
         }
     }
+
     public void RemoveAt(int index)
     {
-        _tracks.RemoveAt(index);
+        _Tracks.RemoveAt(index);
     }
 
-    private List<ChartTrack> _tracks = new List<ChartTrack>();
-    private readonly static int MAX_TRACKS = Constants.MAX_CHART_TRACK_COUNT;
+    public ChartTracks()
+    {
+    }
 
+    public List<ChartTrack> _Tracks { get; set; } = new List<ChartTrack>();
+    private readonly static int MAX_TRACKS = Constants.MAX_CHART_TRACK_COUNT;
 }
 
 public class Chart
@@ -120,32 +128,36 @@ public class Chart
         foreach (var track in midiFile.GetTrackChunks())
         {
             var chartTrack = new ChartTrack();
+            chartTrack.Channel = new MidiChannel(track.Events.Where(e => e is NoteOnEvent).Select(e => (e as NoteOnEvent)!.Channel).FirstOrDefault());
+            var currentTime = new MidiTime(0);
 
             foreach (var midiEvent in track.Events)
             {
-                var metricTimeSpan = TimeConverter.ConvertTo<MetricTimeSpan>(new MidiTimeSpan(midiEvent.DeltaTime) as ITimeSpan, tempoMap);
-                var sec = new MidiTime(metricTimeSpan.TotalSeconds);
-
                 if (midiEvent is SetTempoEvent setTempo)
                 {
-                    chartTrack.AddNote(new ChartNoteChangeTempo(new MidiTempo(setTempo.MicrosecondsPerQuarterNote), sec));
+                    chartTrack.AddNote(new ChartNoteChangeTempo(new MidiTempo(Convert.ToUInt64(setTempo.MicrosecondsPerQuarterNote)), currentTime));
                 }
                 else if (midiEvent is TimeSignatureEvent timeSignature)
                 {
-                    chartTrack.AddNote(new ChartNoteChangeTimeSignature(new MidiTimeSignature(timeSignature.Numerator, timeSignature.Denominator), sec));
+                    chartTrack.AddNote(new ChartNoteChangeTimeSignature(new MidiTimeSignature(timeSignature.Numerator, timeSignature.Denominator), currentTime));
                 }
                 else if (midiEvent is NoteOnEvent noteOn)
                 {
-                    chartTrack.AddNote(new ChartNoteOn(new MidiChannel(noteOn.Channel), new MidiNote(noteOn.NoteNumber, noteOn.Velocity), sec));
+                    chartTrack.AddNote(new ChartNoteOn(new MidiChannel(noteOn.Channel), new MidiNote(noteOn.NoteNumber, noteOn.Velocity), currentTime));
                 }
                 else if (midiEvent is NoteOffEvent noteOff)
                 {
-                    chartTrack.AddNote(new ChartNoteOff(new MidiChannel(noteOff.Channel), new MidiNoteNumber(noteOff.NoteNumber), sec));
+                    chartTrack.AddNote(new ChartNoteOff(new MidiChannel(noteOff.Channel), new MidiNoteNumber(noteOff.NoteNumber), currentTime));
                 }
                 else if (midiEvent is ProgramChangeEvent programChange)
                 {
-                    chartTrack.AddNote(new ChartNoteChangeInstrument(new MidiChannel(programChange.Channel), new MidiInstrumet(programChange.ProgramNumber), sec));
+                    chartTrack.AddNote(new ChartNoteChangeInstrument(new MidiChannel(programChange.Channel), new MidiInstrumet(programChange.ProgramNumber), currentTime));
                 }
+
+                var metricTimeSpan = TimeConverter.ConvertTo<MetricTimeSpan>(new MidiTimeSpan(midiEvent.DeltaTime) as ITimeSpan, tempoMap);
+                var usec = new MidiTime(Convert.ToUInt64(metricTimeSpan.TotalMicroseconds));
+
+                currentTime = currentTime.Add(usec);
             }
 
             chartTrack.DetectScale();

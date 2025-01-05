@@ -35,6 +35,7 @@ public partial class SoundfontPlayer : Node
 			Player.Play();
 			_playback = (AudioStreamGeneratorPlayback)Player.GetStreamPlayback();
 
+			// FIXME: This is a temporary solution to keep the buffer filled.
 			Task.Run(() =>
 			{
 				while (true)

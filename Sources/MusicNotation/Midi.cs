@@ -6,19 +6,18 @@ public sealed record MidiInstrumet(int bank = 0, int program = 0);
 
 public sealed record MidiTimeSignature(int numerator, int denominator);
 
-public sealed record MidiTempo(MidiTime microSecondsPerQuarterNote)
+public sealed record MidiTempo(ulong microSecondsPerQuarterNote)
 {
-    public MidiTempo(long tempo) : this(new MidiTime(tempo)) { }
 }
 
 /// <summary>
-/// Represents a MIDI time in seconds.
+/// Represents a MIDI time in micor seconds.
 /// </summary>
 /// <param name="time"></param>
-public sealed record MidiTime(double time)
+public sealed record MidiTime(ulong time)
 {
     public MidiTime Add(MidiTime time) => new MidiTime(this.time + time.time);
-    public MidiTime Add(double time) => new MidiTime(this.time + time);
+    public MidiTime Add(ulong time) => new MidiTime(this.time + time);
 
     public double ToSeconds() => Convert.ToDouble(time) / 10000 / 1000;
 }
