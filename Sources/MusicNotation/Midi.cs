@@ -59,6 +59,14 @@ public sealed record MidiNoteNumber(int Note)
     public static MidiNoteNumber B4 => new MidiNoteNumber(71);
     public static MidiNoteNumber C5 => new MidiNoteNumber(72);
 
+    public static MidiNoteNumber LowestC => new MidiNoteNumber(0);
+    public static MidiNoteNumber LowestD => new MidiNoteNumber(2);
+    public static MidiNoteNumber LowestE => new MidiNoteNumber(4);
+    public static MidiNoteNumber LowestF => new MidiNoteNumber(5);
+    public static MidiNoteNumber LowestG => new MidiNoteNumber(7);
+    public static MidiNoteNumber LowestA => new MidiNoteNumber(9);
+    public static MidiNoteNumber LowestB => new MidiNoteNumber(11);
+
     public MidiNoteNumber Transpose(int semitones) => new MidiNoteNumber(Note + semitones);
     public MidiNoteNumber Sharp() => new MidiNoteNumber(Note + 1);
     public MidiNoteNumber Flat() => new MidiNoteNumber(Note - 1);

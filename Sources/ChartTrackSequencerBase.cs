@@ -21,12 +21,23 @@ public abstract partial class ChartTrackSequencerBase : Node
         private set => actionHandler.Channel = value;
     }
 
+    public Scale scale
+    {
+        get => actionHandler.Scale;
+        private set => actionHandler.Scale = value;
+    }
+
     public ChartTrackSequencerBase(ActionHandlerBase actionHandler, ChartTrack chartTrack)
     {
         this.actionHandler = actionHandler;
         this.chartTrack = chartTrack;
         this.actionHandler.Scale = chartTrack.Scale;
         actionHandler.Channel = chartTrack.Channel;
+    }
+
+    public void SetScale(Scale scale)
+    {
+        this.scale = scale;
     }
 
     public abstract IEnumerator Play(IEnumerable<ChartNote> notes);

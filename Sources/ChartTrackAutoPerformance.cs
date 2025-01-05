@@ -26,7 +26,6 @@ public sealed partial class ChartTrackAutoPerformance : ChartTrackSequencerBase
 
     private void _Init()
     {
-        actionHandler.Scale = chartTrack.Scale;
         previousTimeUsec = _performanceManager.CurrentTimeUsec;
         previousDurationUsec = 0;
     }
@@ -75,17 +74,16 @@ public sealed partial class ChartTrackAutoPerformance : ChartTrackSequencerBase
         {
             case ChartNoteOn on:
                 {
-                    var actionKinds = PerformanceActionKindExtension.FromMidiNote(on.note.Note, actionHandler.Scale);
+                    var actionKinds = PerformanceActionKindExtension.FromMidiNote(on.note.Note, scale);
                     foreach (var actionKind in actionKinds)
                     {
-                        GameManager.Info($"Channel: {actionHandler.Channel}, Action: {actionKind.ToActionName()}");
+                        GameManager.Info($"Channel: {midiChannel}, Press Action: {actionKind.ToActionName()}");
                         actionHandler.PerformHandler(new PerformanceAction(actionKind, true, false), on.note.Velocity);
                     }
                     foreach (var actionKind in actionKinds)
                     {
                         if (actionKind is PerformanceActionKind.SHARP || actionKind is PerformanceActionKind.OCTAVE_UP)
                         {
-                            GameManager.Info($"Channel: {actionHandler.Channel}, Action: {actionKind.ToActionName()}");
                             actionHandler.PerformHandler(new PerformanceAction(actionKind, false, true));
                         }
                     }
@@ -93,23 +91,29 @@ public sealed partial class ChartTrackAutoPerformance : ChartTrackSequencerBase
                 }
             case ChartNoteOff off:
                 {
-                    var actionKinds = PerformanceActionKindExtension.FromMidiNote(off.note.Note, actionHandler.Scale);
+                    var actionKinds = PerformanceActionKindExtension.FromMidiNote(off.note.Note, scale);
                     foreach (var actionKind in actionKinds)
                     {
-                        GameManager.Info($"Channel: {actionHandler.Channel}, Action: {actionKind.ToActionName()}");
+                        GameManager.Info($"Channel: {midiChannel}, Release Action: {actionKind.ToActionName()}");
                         actionHandler.PerformHandler(new PerformanceAction(actionKind, false, true));
                     }
                     break;
                 }
             case ChartNoteChangeInstrument changeInstrument:
                 {
-                    _performanceManager.SetInstrument(actionHandler.Channel, changeInstrument.instrument.bank, changeInstrument.instrument.program);
-                    GameManager.Info($"Channel: {actionHandler.Channel}, Instrument: {changeInstrument.instrument}");
+                    _performanceManager.SetInstrument(midiChannel, changeInstrument.instrument.bank, changeInstrument.instrument.program);
+                    GameManager.Info($"Channel: {midiChannel}, Instrument: {changeInstrument.instrument}");
+                    break;
+                }
+            case ChartNoteChangeKeySignature keySignature:
+                {
+                    SetScale(scale.UpdateKeySig(keySignature.scale));
+                    GameManager.Info($"Channel: {midiChannel}, Key Signature: {keySignature.scale}");
                     break;
                 }
             default:
                 {
-                    GameManager.Warn($"Channel: {actionHandler.Channel}, Unhandled note type: {note.GetType().Name}");
+                    GameManager.Warn($"Channel: {midiChannel}, Unhandled note type: {note.GetType().Name}");
                     break;
                 }
         }

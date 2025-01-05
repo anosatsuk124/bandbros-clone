@@ -17,14 +17,14 @@ using System;
 [JsonDerivedType(typeof(ChartNoteOff), "noteOff")]
 [JsonDerivedType(typeof(ChartNoteChangeTempo), "changeTempo")]
 [JsonDerivedType(typeof(ChartNoteChangeTimeSignature), "changeTimeSignature")]
-[JsonDerivedType(typeof(ChartNoteChangeScale), "changeScale")]
+[JsonDerivedType(typeof(ChartNoteChangeKeySignature), "changeKeySignature")]
 [JsonDerivedType(typeof(ChartNoteChangeInstrument), "changeInstrument")]
 public abstract record ChartNote(MidiTime duration);
 public sealed record ChartNoteOn(MidiChannel channel, MidiNote note, MidiTime duration) : ChartNote(duration);
 public sealed record ChartNoteOff(MidiChannel channel, MidiNoteNumber note, MidiTime duration) : ChartNote(duration);
 public sealed record ChartNoteChangeTempo(MidiTempo MidiTempo, MidiTime duration) : ChartNote(duration);
 public sealed record ChartNoteChangeTimeSignature(MidiTimeSignature timeSignature, MidiTime duration) : ChartNote(duration);
-public sealed record ChartNoteChangeScale(ScaleClass scale, MidiTime duration) : ChartNote(duration);
+public sealed record ChartNoteChangeKeySignature(int scale, MidiTime duration) : ChartNote(duration);
 public sealed record ChartNoteChangeInstrument(MidiChannel channel, MidiInstrumet instrument, MidiTime duration) : ChartNote(duration);
 
 public class ChartTrack
@@ -153,6 +153,10 @@ public class Chart
                 {
                     chartTrack.AddNote(new ChartNoteChangeInstrument(new MidiChannel(programChange.Channel), new MidiInstrumet(programChange.ProgramNumber), currentTime));
                 }
+                else if (midiEvent is KeySignatureEvent keySignatureEvent)
+                {
+                    if (chartTrack.Channel != 10) chartTrack.AddNote(new ChartNoteChangeKeySignature(keySignatureEvent.Key, currentTime));
+                }
 
                 var metricTimeSpan = TimeConverter.ConvertTo<MetricTimeSpan>(new MidiTimeSpan(midiEvent.DeltaTime) as ITimeSpan, tempoMap);
                 var usec = new MidiTime(Convert.ToUInt64(metricTimeSpan.TotalMicroseconds));
@@ -160,7 +164,7 @@ public class Chart
                 currentTime = currentTime.Add(usec);
             }
 
-            chartTrack.DetectScale();
+            if (chartTrack.Channel != 10) chartTrack.DetectScale(); // Channel 10 is reserved for percussion
             chart.AddTrack(chartTrack);
         }
 
