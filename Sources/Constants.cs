@@ -25,4 +25,6 @@ public static class Constants
     public static readonly string DEFAULT_SOUNDFONT = ResourceManager.GetResourceAbsPath(ProjectSettings.GetSetting("audio/soundfont_player/default_soundfont").AsString());
 
     public static readonly int SAMPLE_RATE = ProjectSettings.GetSetting("audio/soundfont_player/sample_rate").AsInt32();
+
+    public static readonly string NOTE_IMAGES_PATH = ProjectSettings.GetSetting("application/config/note_images_path").AsString();
 }

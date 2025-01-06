@@ -109,9 +109,14 @@ public partial class ChartCreatorDebugUi : Control
 
 		performanceManager.Reset();
 
-		var notesArr = sequencers.Select(sequencer => sequencer.GetEnumerator()).ToArray();
+		var notesSequencer = new NotesSequencer(actionHandlers[0], _chart.Tracks[3]);
+		notesSequencer.PostionOffset = new Vector2(0, 0);
+		notesSequencer.Parent = notesSequencerParent;
+		notesSequencerParent.AddChild(notesSequencer);
 
 		var playEnumerators = sequencers.Select(sequencer => sequencer.Play(sequencer.chartTrack.Notes)).ToArray();
 		while (playEnumerators.Any(enumerator => enumerator.MoveNext())) ;
 	}
+
+	[Export] public Node2D notesSequencerParent;
 }

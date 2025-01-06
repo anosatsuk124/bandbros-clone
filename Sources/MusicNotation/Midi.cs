@@ -10,6 +10,11 @@ public sealed record MidiTempo(ulong microSecondsPerQuarterNote)
 {
 }
 
+public sealed record MidiBeat(float beat)
+{
+    public static implicit operator float(MidiBeat beat) => beat.beat;
+}
+
 /// <summary>
 /// Represents a MIDI time in micor seconds.
 /// </summary>
