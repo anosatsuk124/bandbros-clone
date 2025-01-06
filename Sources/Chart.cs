@@ -167,6 +167,7 @@ public class Chart
                 {
                     var midiNote = new MidiNote(noteOn.NoteNumber, noteOn.Velocity);
                     noteIsPlaying[midiNote.Note] = (midiNote, currentTime);
+
                 }
                 else if (midiEvent is NoteOffEvent noteOff)
                 {
@@ -179,11 +180,11 @@ public class Chart
 
                     var scale = scales.Last();
                     var octaveDistance = scale.GetOctaveDistance(midiNote.Note);
-                    if (chartTrack.Channel != 10 && octaveDistance > 1 || octaveDistance < 0)
+                    if (chartTrack.Channel != 10 && (octaveDistance > 1 || octaveDistance < 0))
                     {
-                        scale = scale with { Key = scale.Key.ChangeOctave(scales.Last().GetOctaveDistance(midiNote.Note)) };
+                        scale = scale with { Key = scale.Key.ChangeOctave(octaveDistance) };
                         scales.Add(scale);
-                        chartTrack.AddNote(new ChartNoteChangeScale(scale, startTime));
+                        chartTrack.AddNote(new ChartNoteChangeScale(scale, currentTime));
                     }
                     chartTrack.AddNote(new ChartNoteHold(chartTrack.Channel, midiNote, scale, startTime, endTime));
                     noteIsPlaying[midiNote.Note] = null;

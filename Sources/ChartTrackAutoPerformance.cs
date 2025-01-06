@@ -72,22 +72,27 @@ public sealed partial class ChartTrackAutoPerformance : ChartTrackSequencerBase
         {
             case ChartNoteHold hold:
                 {
+                    var prevScale = scale with { };
                     var currentScale = hold.scale with { };
                     var actionKinds = PerformanceActionKindExtension.FromMidiNote(hold.note.Note, currentScale);
+
+                    SetScale(currentScale);
                     foreach (var actionKind in actionKinds)
                     {
                         GameManager.Info($"Channel: {midiChannel}, Press Action: {actionKind.ToActionName()}");
                         actionHandler.PerformHandler(new PerformanceAction(actionKind, true, false), hold.note.Velocity);
                     }
+                    SetScale(prevScale);
 
                     await ToSignal(GetTree().CreateTimer(hold.endTime.Sub(hold.startTime).ToSeconds()), Timer.SignalName.Timeout);
-                    GameManager.Info($"Waited for {hold.endTime.Sub(hold.startTime).ToSeconds()} seconds");
 
+                    SetScale(currentScale);
                     foreach (var actionKind in actionKinds)
                     {
                         GameManager.Info($"Channel: {midiChannel}, Release Action: {actionKind.ToActionName()}");
                         actionHandler.PerformHandler(new PerformanceAction(actionKind, false, true), hold.note.Velocity);
                     }
+                    SetScale(prevScale);
                     break;
                 }
             case ChartNoteChangeInstrument changeInstrument:
