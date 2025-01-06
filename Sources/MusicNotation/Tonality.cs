@@ -8,7 +8,10 @@ namespace BandBrosClone.MusicNotation;
 
 public sealed record Scale(MidiNoteNumber Key, int I, int II, int III, int IV, int V, int VI, int VII, int VIII)
 {
-    public int Octave { get => Key.Note / (Key.PitchClass + 1); }
+    public int Octave
+    {
+        get => Scale.Major(0).GetOctaveDistance(Key);
+    }
     public static Scale Major(MidiNoteNumber key) => new Scale(key, [0, 2, 4, 5, 7, 9, 11, 12]);
     public static Scale NaturalMinor(MidiNoteNumber key) => new Scale(key, [0, 2, 3, 5, 7, 8, 10, 12]);
 
@@ -49,11 +52,29 @@ public sealed record Scale(MidiNoteNumber Key, int I, int II, int III, int IV, i
 
     public MidiNoteNumber GetNotes(int num)
     {
+        if (num > 11)
+        {
+            return Key.Transpose(GetIntervalFromNumber(num) + 12);
+        }
+
         return Key.Transpose(GetIntervalFromNumber(num));
     }
 
     // I ~ VIII のインターバル配列化 (mod 12 して使う場面が多い)
     private int[] Intervals => new[] { I, II, III, IV, V, VI, VII, VIII };
+
+    public int GetOctaveDistance(MidiNoteNumber note)
+    {
+        // (1) keyRoot から note までの半音差
+        int semitoneDiff = note - Key.Note;
+
+        // (2) 半音差を 12 で割ってオクターヴ差に変換
+        //     小数部分は切り捨てられる (int の整数除算)
+        int octaveDistance = semitoneDiff / 12;
+
+        return octaveDistance;
+    }
+
 
     /// <summary>
     /// このスケールが引数のノートを「含む」かどうか判定
@@ -82,7 +103,10 @@ public sealed record Scale(MidiNoteNumber Key, int I, int II, int III, int IV, i
     public static Scale? DetectScale(IEnumerable<MidiNoteNumber> notes)
     {
         if (notes is null || !notes.Any())
+        {
+            GameManager.Warn("No notes to detect scale.");
             return null;
+        }
 
         // (1) 全12ピッチクラスでスコアを計算
         int bestScore = -1;
@@ -98,11 +122,12 @@ public sealed record Scale(MidiNoteNumber Key, int I, int II, int III, int IV, i
                 bestPc = pc;
             }
         }
+        //int bestPc = KrumhanslSchmuckler.DetectKey(notes).isMajor ? KrumhanslSchmuckler.DetectKey(notes).root : KrumhanslSchmuckler.DetectKey(notes).root + 3;
 
         // (2) 入力の最も低いノート値
         int lowestNoteVal = notes.Min(n => n.Note);
 
-        // (3) Keyを "[lowestNoteVal - 12, lowestNoteVal]" の範囲で探し、
+        // (3) Keyを "[lowestNoteVal, lowestNoteVal+12]" の範囲で探し、
         //     かつピッチクラス == bestPc、かつできるだけ大きいKeyを使う
         //
         //   条件:
@@ -111,7 +136,7 @@ public sealed record Scale(MidiNoteNumber Key, int I, int II, int III, int IV, i
         //   の中から最大の keyVal を探す
 
         int possibleKey = int.MinValue;
-        for (int k = lowestNoteVal; k >= lowestNoteVal - 12; k--)
+        for (int k = lowestNoteVal; k <= lowestNoteVal + 12; k++)
         {
             if (k < 0) break; // 0未満になるとMIDIノート的には不正(ただしMIDI規格外になる場合も)
 

@@ -19,7 +19,10 @@ public sealed record MidiTime(ulong time)
     public MidiTime Add(MidiTime time) => new MidiTime(this.time + time.time);
     public MidiTime Add(ulong time) => new MidiTime(this.time + time);
 
-    public double ToSeconds() => Convert.ToDouble(time) / 10000 / 1000;
+    public MidiTime Sub(MidiTime time) => new MidiTime(this.time - time.time);
+    public MidiTime Sub(ulong time) => new MidiTime(this.time - time);
+
+    public double ToSeconds() => time / 1_000_000.0;
 }
 
 

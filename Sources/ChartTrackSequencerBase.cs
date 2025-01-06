@@ -2,7 +2,6 @@ namespace BandBrosClone;
 
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using BandBrosClone.MusicNotation;
 using Godot;
 
@@ -41,8 +40,6 @@ public abstract partial class ChartTrackSequencerBase : Node
     }
 
     public abstract IEnumerator Play(IEnumerable<ChartNote> notes);
-
-    protected abstract void HandleChartNote(ChartNote note);
 
     public IEnumerator<ChartNote> GetEnumerator()
     {

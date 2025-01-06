@@ -32,7 +32,7 @@ public abstract partial class ActionHandlerBase : Node
                 _currentPlayingActions[(int)actionKind] = null;
             }
 
-            _soundfontPlayer.PlayNoteOn(Channel, note, 100);
+            _soundfontPlayer.PlayNoteOn(Channel, note.Note, note.Velocity);
             _currentPlayingActions[(int)actionKind] = note;
         }
         if (action.IsActionReleased(actionKind))
@@ -45,6 +45,9 @@ public abstract partial class ActionHandlerBase : Node
             _soundfontPlayer.PlayNoteOff(Channel, note);
             _currentPlayingActions[(int)actionKind] = null;
         }
+
+        _modulateWithAction(new PerformanceAction(PerformanceActionKind.SHARP, false, true));
+        _modulateWithAction(new PerformanceAction(PerformanceActionKind.OCTAVE_UP, false, true));
     }
 
     private int _sharp = 0;
@@ -54,19 +57,23 @@ public abstract partial class ActionHandlerBase : Node
     {
         if (action.IsActionPressed(PerformanceActionKind.SHARP))
         {
+            _currentPlayingActions[(int)PerformanceActionKind.SHARP] = new MidiNote(0);
             _sharp = 1;
         }
         if (action.IsActionReleased(PerformanceActionKind.SHARP))
         {
+            _currentPlayingActions[(int)PerformanceActionKind.SHARP] = null;
             _sharp = 0;
         }
 
         if (action.IsActionPressed(PerformanceActionKind.OCTAVE_UP))
         {
+            _currentPlayingActions[(int)PerformanceActionKind.OCTAVE_UP] = new MidiNote(0);
             _octave = 1;
         }
         if (action.IsActionReleased(PerformanceActionKind.OCTAVE_UP))
         {
+            _currentPlayingActions[(int)PerformanceActionKind.OCTAVE_UP] = null;
             _octave = 0;
         }
     }
@@ -104,5 +111,20 @@ public abstract partial class ActionHandlerBase : Node
         _playNoteWithInputAction(action, PerformanceActionKind.VI, note);
         _playNoteWithInputAction(action, PerformanceActionKind.VII, note);
         _playNoteWithInputAction(action, PerformanceActionKind.VIII, note);
+    }
+
+    public void AllNotesOff()
+    {
+        //        for (int i = 0;  i < 127; i++)
+        //        {
+        //            _soundfontPlayer.PlayNoteOff(Channel, new MidiNote(i));
+        //        }
+        for (int i = 0; i < _currentPlayingActions.Length; i++)
+        {
+            if (_currentPlayingActions[i] is not null)
+            {
+                PerformHandler(new PerformanceAction((PerformanceActionKind)i, false, true));
+            }
+        }
     }
 }

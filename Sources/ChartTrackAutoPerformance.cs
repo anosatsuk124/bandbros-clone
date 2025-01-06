@@ -3,6 +3,7 @@ namespace BandBrosClone;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using BandBrosClone.MusicNotation;
 using Godot;
 
@@ -33,11 +34,11 @@ public sealed partial class ChartTrackAutoPerformance : ChartTrackSequencerBase
 
     private Action _play(ulong currentDurationUsec, ChartNote note)
     {
-        return () =>
+        return async () =>
         {
             previousTimeUsec = _performanceManager.CurrentTimeUsec;
             previousDurationUsec = currentDurationUsec;
-            HandleChartNote(note);
+            await HandleChartNote(note);
         };
     }
 
@@ -49,16 +50,13 @@ public sealed partial class ChartTrackAutoPerformance : ChartTrackSequencerBase
             var timeoffset = previousTimeUsec;
             var currentDurationUsec = note.duration.time;
             var waitTimeOffset = previousTimeUsec - timeoffset;
-            GameManager.Info($"Current Time Offset sec: {timeoffset / 1_000_000.0}");
 
             var play = _play(currentDurationUsec, note);
 
             if (previousDurationUsec != currentDurationUsec && waitTimeOffset < currentDurationUsec)
             {
                 var waitTime = (currentDurationUsec + waitTimeOffset) / 1_000_000.0;
-                GameManager.Info($"Waiting for {waitTime} seconds");
                 GetTree().CreateTimer(waitTime).Timeout += play;
-                yield return null;
             }
             else
             {
@@ -68,34 +66,27 @@ public sealed partial class ChartTrackAutoPerformance : ChartTrackSequencerBase
         }
     }
 
-    protected override void HandleChartNote(ChartNote note)
+    public async Task HandleChartNote(ChartNote note)
     {
         switch (note)
         {
-            case ChartNoteOn on:
+            case ChartNoteHold hold:
                 {
-                    var actionKinds = PerformanceActionKindExtension.FromMidiNote(on.note.Note, scale);
+                    var currentScale = hold.scale with { };
+                    var actionKinds = PerformanceActionKindExtension.FromMidiNote(hold.note.Note, currentScale);
                     foreach (var actionKind in actionKinds)
                     {
                         GameManager.Info($"Channel: {midiChannel}, Press Action: {actionKind.ToActionName()}");
-                        actionHandler.PerformHandler(new PerformanceAction(actionKind, true, false), on.note.Velocity);
+                        actionHandler.PerformHandler(new PerformanceAction(actionKind, true, false), hold.note.Velocity);
                     }
-                    foreach (var actionKind in actionKinds)
-                    {
-                        if (actionKind is PerformanceActionKind.SHARP || actionKind is PerformanceActionKind.OCTAVE_UP)
-                        {
-                            actionHandler.PerformHandler(new PerformanceAction(actionKind, false, true));
-                        }
-                    }
-                    break;
-                }
-            case ChartNoteOff off:
-                {
-                    var actionKinds = PerformanceActionKindExtension.FromMidiNote(off.note.Note, scale);
+
+                    await ToSignal(GetTree().CreateTimer(hold.endTime.Sub(hold.startTime).ToSeconds()), Timer.SignalName.Timeout);
+                    GameManager.Info($"Waited for {hold.endTime.Sub(hold.startTime).ToSeconds()} seconds");
+
                     foreach (var actionKind in actionKinds)
                     {
                         GameManager.Info($"Channel: {midiChannel}, Release Action: {actionKind.ToActionName()}");
-                        actionHandler.PerformHandler(new PerformanceAction(actionKind, false, true));
+                        actionHandler.PerformHandler(new PerformanceAction(actionKind, false, true), hold.note.Velocity);
                     }
                     break;
                 }
@@ -105,10 +96,11 @@ public sealed partial class ChartTrackAutoPerformance : ChartTrackSequencerBase
                     GameManager.Info($"Channel: {midiChannel}, Instrument: {changeInstrument.instrument}");
                     break;
                 }
-            case ChartNoteChangeKeySignature keySignature:
+            case ChartNoteChangeScale changeScale:
                 {
-                    SetScale(scale.UpdateKeySig(keySignature.scale));
-                    GameManager.Info($"Channel: {midiChannel}, Key Signature: {keySignature.scale}");
+                    var scale = changeScale.scale;
+                    SetScale(scale);
+                    GameManager.Info($"Channel: {midiChannel}, Scale: {scale}");
                     break;
                 }
             default:
