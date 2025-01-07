@@ -13,7 +13,7 @@ public sealed partial class InputHandler : ActionHandlerBase
 {
     public override MidiChannel Channel { get => performanceManager!.PlayerChannel; set { performanceManager!.PlayerChannel = value; } }
 
-    public override void _Process(double delta)
+    public override void _PhysicsProcess(double delta)
     {
         _inputHandler();
     }

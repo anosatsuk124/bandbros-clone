@@ -10,6 +10,8 @@ public partial class PerformanceManager : Node
 
     public MidiChannel PlayerChannel { get; set; } = new MidiChannel(0);
 
+    public double DeltaTime { get; private set; } = 0;
+
     public MidiInstrumet[] Instruments
     {
         get => SoundfontPlayer.Instruments;
@@ -31,6 +33,12 @@ public partial class PerformanceManager : Node
     {
         SoundfontPlayer.Reset();
         _startTimeUsec = Time.GetTicksUsec();
+        SetDeltaZero();
+    }
+
+    public override void _Process(double delta)
+    {
+        DeltaTime += delta;
     }
 
     public override void _Ready()
@@ -47,5 +55,10 @@ public partial class PerformanceManager : Node
     public void SetInstrument(MidiChannel channel, int bank, int program = 0)
     {
         SoundfontPlayer.SetInstrument(channel, bank, program);
+    }
+
+    public void SetDeltaZero()
+    {
+        DeltaTime = 0;
     }
 }

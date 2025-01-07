@@ -32,14 +32,12 @@ public abstract partial class ActionHandlerBase : Node
 
     public bool IsActionJustPressed(PerformanceAction action)
     {
-        var _action = PerformingActions[(int)action.ActionKind];
-        return _action is not null && _action.IsJustPressed;
+        return action.IsJustPressed;
     }
 
     public bool IsActionJustReleased(PerformanceAction action)
     {
-        var _action = PerformingActions[(int)action.ActionKind];
-        return _action is not null && _action.IsJustReleased;
+        return action.IsJustReleased;
     }
 
     public void SetChannel(MidiChannel channel)

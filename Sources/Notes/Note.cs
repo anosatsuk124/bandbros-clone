@@ -13,17 +13,20 @@ public partial class Note : NoteBase
 	}
 	private PerformanceActionKind _actionKind;
 
-	public override MidiBeat Beat { get => _midiBeat; protected set => SetBeat(value); }
+	public MidiNote midiNote { get; private set; }
 
-	private MidiBeat _midiBeat;
+	public override MidiTime Duration { get => _midiTime; protected set => SetBeat(value); }
+
+	private MidiTime _midiTime;
 
 	public Sprite2D attackSprite { get; private set; }
 	public Sprite2D holdSprite { get; private set; }
 
-	public Vector2 ReleasePosition => new Vector2(GlobalPosition.X + Beat, GlobalPosition.Y);
+	public Vector2 ReleasePosition => new Vector2(GlobalPosition.X + (float)Duration.ToSeconds(), GlobalPosition.Y);
 	public Vector2 AttackPosition => GlobalPosition;
 
 	public Vector2 DetectPointPosition { get; set; }
+
 
 	public const float HOLD_WIDTH = 150;
 
@@ -47,19 +50,20 @@ public partial class Note : NoteBase
 
 	public float Velocity { get; set; }
 
-	public Note(PerformanceActionKind actionKind, MidiBeat midiBeat, float velocity, Vector2 detectPointPosition)
+	public Note(PerformanceActionKind actionKind, MidiTime midiTime, float velocity, Vector2 detectPointPosition, MidiNote note)
 	{
 		_actionKind = actionKind;
-		_midiBeat = midiBeat;
+		_midiTime = midiTime;
 		Velocity = velocity;
+		midiNote = note;
 		this.DetectPointPosition = detectPointPosition;
 	}
 
-	public void SetBeat(MidiBeat midiBeat)
+	public void SetBeat(MidiTime midiTime)
 	{
-		_midiBeat = midiBeat;
+		_midiTime = Duration;
 		if (holdSprite is null) return;
-		holdSprite.Scale = new Vector2(midiBeat / HOLD_WIDTH * 0.5f, 1);
+		holdSprite.Scale = new Vector2((float)Duration.ToSeconds() * Velocity / HOLD_WIDTH * 0.5f, holdSprite.Scale.Y);
 	}
 
 	public void MoveNote(double deltaTime)
@@ -71,15 +75,20 @@ public partial class Note : NoteBase
 	{
 		attackSprite = new Sprite2D();
 		attackSprite.ZIndex = 1;
+		AddChild(attackSprite);
+
 		holdSprite = new Sprite2D();
 		holdSprite.Offset = new Vector2(HOLD_WIDTH, 0);
 		holdSprite.Scale = new Vector2(0.5f, 0.7f);
 		holdSprite.Texture = GD.Load<Texture2D>(Constants.NOTE_IMAGES_PATH.PathJoin("base.png"));
 		holdSprite.ZIndex = 0;
-		AddChild(attackSprite);
 		AddChild(holdSprite);
+
+		attackSprite.MoveLocalX(-150);
+		holdSprite.MoveLocalX(-150);
+
 		SetActionKind(_actionKind);
-		SetBeat(_midiBeat);
+		SetBeat(_midiTime);
 	}
 
 	public void SetActionKind(PerformanceActionKind actionKind)
@@ -126,9 +135,5 @@ public partial class Note : NoteBase
 				}
 			default: throw new ArgumentOutOfRangeException();
 		}
-	}
-
-	public override void _Process(double delta)
-	{
 	}
 }

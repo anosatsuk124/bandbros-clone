@@ -17,25 +17,11 @@ public sealed partial class ChartTrackAutoPerformance : ChartTrackSequencerBase
     {
     }
 
-
-
-    public override void _Process(double delta)
-    {
-        deltaTime += delta;
-    }
-
-    private double deltaTime = 0;
-
     public override IEnumerator Play(IEnumerable<ChartNote> notes)
     {
-        deltaTime = 0;
         foreach (var note in notes)
         {
-            while (deltaTime < note.duration.ToSeconds())
-            {
-                GameManager.Info($"Channel: {midiChannel}, Waiting for {note.duration.ToSeconds() - deltaTime} seconds");
-                yield return null;
-            }
+            while (actionHandler.performanceManager.DeltaTime < note.duration.ToSeconds()) yield return null;
             switch (note)
             {
                 case ChartNoteHold hold:
@@ -52,15 +38,17 @@ public sealed partial class ChartTrackAutoPerformance : ChartTrackSequencerBase
                         }
                         SetScale(prevScale);
 
-                        while (deltaTime < hold.endTime.ToSeconds()) yield return null;
-
-                        SetScale(currentScale);
-                        foreach (var actionKind in actionKinds)
+                        GetTree().CreateTimer(hold.endTime.Sub(hold.startTime).ToSeconds()).Timeout += () =>
                         {
-                            GameManager.Info($"Channel: {midiChannel}, Release Action: {actionKind.ToActionName()}");
-                            actionHandler.PerformHandler(new PerformanceAction(actionKind, false, true, hold.note.Velocity));
-                        }
-                        SetScale(prevScale);
+                            SetScale(currentScale);
+                            foreach (var actionKind in actionKinds)
+                            {
+                                GameManager.Info($"Channel: {midiChannel}, Release Action: {actionKind.ToActionName()}");
+                                actionHandler.PerformHandler(new PerformanceAction(actionKind, false, true, hold.note.Velocity));
+                            }
+                            SetScale(prevScale);
+                        };
+
                         break;
                     }
                 case ChartNoteChangeInstrument changeInstrument:
