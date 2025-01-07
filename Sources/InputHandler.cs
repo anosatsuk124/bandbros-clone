@@ -27,18 +27,19 @@ public sealed partial class InputHandler : ActionHandlerBase
         foreach (var action in Enum.GetValues<PerformanceActionKind>())
         {
             var isActionPlaying = _currentPlayingActions[(int)action];
-            var isActionPressed = Input.IsActionPressed(action.ToActionName());
+            var isActionJustPressed = Input.IsActionJustPressed(action.ToActionName());
+            var isActionReleased = Input.IsActionJustReleased(action.ToActionName());
 
-            if ((isActionPlaying && isActionPressed) || (!isActionPlaying && !isActionPressed)) continue;
+            if ((isActionPlaying && isActionJustPressed) || (!isActionPlaying && !isActionJustPressed)) continue;
 
-            if (!isActionPlaying && isActionPressed)
+            if (!isActionPlaying)
             {
-                PerformHandler(new PerformanceAction(action, true, false), _currentVelocity);
+                PerformHandler(new PerformanceAction(action, isActionJustPressed, isActionReleased, _currentVelocity));
                 _currentPlayingActions[(int)action] = true;
             }
-            else if (isActionPlaying && !isActionPressed)
+            else
             {
-                PerformHandler(new PerformanceAction(action, false, true), _currentVelocity);
+                PerformHandler(new PerformanceAction(action, isActionJustPressed, isActionReleased, _currentVelocity));
                 _currentPlayingActions[(int)action] = false;
             }
         }

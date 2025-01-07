@@ -9,110 +9,80 @@ using Godot;
 
 public sealed partial class ChartTrackAutoPerformance : ChartTrackSequencerBase
 {
-    private Timer _timer;
-
     public ChartTrackAutoPerformance(ActionHandlerBase actionHandler, ChartTrack chartTrack) : base(actionHandler, chartTrack)
     {
     }
 
     public override void _Ready()
     {
-        _timer = new Timer();
-        _timer.OneShot = true;
-        AddChild(_timer);
     }
 
-    private ulong previousTimeUsec;
-    private ulong previousDurationUsec;
 
-    private void _Init()
+
+    public override void _Process(double delta)
     {
-        previousTimeUsec = _performanceManager.CurrentTimeUsec;
-        previousDurationUsec = 0;
+        deltaTime += delta;
     }
 
-
-    private Action _play(ulong currentDurationUsec, ChartNote note)
-    {
-        return async () =>
-        {
-            previousTimeUsec = _performanceManager.CurrentTimeUsec;
-            previousDurationUsec = currentDurationUsec;
-            await HandleChartNote(note);
-        };
-    }
+    private double deltaTime = 0;
 
     public override IEnumerator Play(IEnumerable<ChartNote> notes)
     {
-        _Init();
+        deltaTime = 0;
         foreach (var note in notes)
         {
-            var timeoffset = previousTimeUsec;
-            var currentDurationUsec = note.duration.time;
-            var waitTimeOffset = previousTimeUsec - timeoffset;
-
-            var play = _play(currentDurationUsec, note);
-
-            if (previousDurationUsec != currentDurationUsec && waitTimeOffset < currentDurationUsec)
+            while (deltaTime < note.duration.ToSeconds())
             {
-                var waitTime = (currentDurationUsec + waitTimeOffset) / 1_000_000.0;
-                GetTree().CreateTimer(waitTime).Timeout += play;
+                GameManager.Info($"Channel: {midiChannel}, Waiting for {note.duration.ToSeconds() - deltaTime} seconds");
+                yield return null;
             }
-            else
+            switch (note)
             {
-                play();
+                case ChartNoteHold hold:
+                    {
+                        var prevScale = scale with { };
+                        var currentScale = hold.scale with { };
+                        var actionKinds = PerformanceActionKindExtension.FromMidiNote(hold.note.Note, currentScale);
+
+                        SetScale(currentScale);
+                        foreach (var actionKind in actionKinds)
+                        {
+                            GameManager.Info($"Channel: {midiChannel}, Press Action: {actionKind.ToActionName()}");
+                            actionHandler.PerformHandler(new PerformanceAction(actionKind, true, false, hold.note.Velocity));
+                        }
+                        SetScale(prevScale);
+
+                        while (deltaTime < hold.endTime.ToSeconds()) yield return null;
+
+                        SetScale(currentScale);
+                        foreach (var actionKind in actionKinds)
+                        {
+                            GameManager.Info($"Channel: {midiChannel}, Release Action: {actionKind.ToActionName()}");
+                            actionHandler.PerformHandler(new PerformanceAction(actionKind, false, true, hold.note.Velocity));
+                        }
+                        SetScale(prevScale);
+                        break;
+                    }
+                case ChartNoteChangeInstrument changeInstrument:
+                    {
+                        _performanceManager.SetInstrument(midiChannel, changeInstrument.instrument.bank, changeInstrument.instrument.program);
+                        GameManager.Info($"Channel: {midiChannel}, Instrument: {changeInstrument.instrument}");
+                        break;
+                    }
+                case ChartNoteChangeScale changeScale:
+                    {
+                        var scale = changeScale.scale;
+                        SetScale(scale);
+                        GameManager.Info($"Channel: {midiChannel}, Scale: {scale}");
+                        break;
+                    }
+                default:
+                    {
+                        GameManager.Warn($"Channel: {midiChannel}, Unhandled note type: {note.GetType().Name}");
+                        break;
+                    }
             }
-            yield return null;
         }
     }
 
-    public async Task HandleChartNote(ChartNote note)
-    {
-        switch (note)
-        {
-            case ChartNoteHold hold:
-                {
-                    var prevScale = scale with { };
-                    var currentScale = hold.scale with { };
-                    var actionKinds = PerformanceActionKindExtension.FromMidiNote(hold.note.Note, currentScale);
-
-                    SetScale(currentScale);
-                    foreach (var actionKind in actionKinds)
-                    {
-                        GameManager.Info($"Channel: {midiChannel}, Press Action: {actionKind.ToActionName()}");
-                        actionHandler.PerformHandler(new PerformanceAction(actionKind, true, false), hold.note.Velocity);
-                    }
-                    SetScale(prevScale);
-
-                    await ToSignal(GetTree().CreateTimer(hold.endTime.Sub(hold.startTime).ToSeconds()), Timer.SignalName.Timeout);
-
-                    SetScale(currentScale);
-                    foreach (var actionKind in actionKinds)
-                    {
-                        GameManager.Info($"Channel: {midiChannel}, Release Action: {actionKind.ToActionName()}");
-                        actionHandler.PerformHandler(new PerformanceAction(actionKind, false, true), hold.note.Velocity);
-                    }
-                    SetScale(prevScale);
-                    break;
-                }
-            case ChartNoteChangeInstrument changeInstrument:
-                {
-                    _performanceManager.SetInstrument(midiChannel, changeInstrument.instrument.bank, changeInstrument.instrument.program);
-                    GameManager.Info($"Channel: {midiChannel}, Instrument: {changeInstrument.instrument}");
-                    break;
-                }
-            case ChartNoteChangeScale changeScale:
-                {
-                    var scale = changeScale.scale;
-                    SetScale(scale);
-                    GameManager.Info($"Channel: {midiChannel}, Scale: {scale}");
-                    break;
-                }
-            default:
-                {
-                    GameManager.Warn($"Channel: {midiChannel}, Unhandled note type: {note.GetType().Name}");
-                    break;
-                }
-        }
-    }
 }

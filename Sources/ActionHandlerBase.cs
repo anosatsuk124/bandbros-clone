@@ -4,6 +4,8 @@ namespace BandBrosClone;
 using Godot;
 using MusicNotation;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 public abstract partial class ActionHandlerBase : Node
 {
@@ -15,7 +17,30 @@ public abstract partial class ActionHandlerBase : Node
 
     public Scale? Scale { get; set; } = Constants.DEFAULT_SCALE;
 
-    private MidiNote?[] _currentPlayingActions = new MidiNote?[Enum.GetValues<PerformanceActionKind>().Length];
+    private MidiNote?[] _currentPlayingMidiNote = new MidiNote?[Enum.GetValues<PerformanceActionKind>().Length];
+
+    public PerformanceAction[] PerformingActions = new PerformanceAction[Enum.GetValues<PerformanceActionKind>().Length];
+
+    [Signal]
+    public delegate void OnActionEventHandler();
+
+    public bool IsActionPressing(PerformanceAction action)
+    {
+        var _action = PerformingActions[(int)action.ActionKind];
+        return _action is not null && !_action.IsJustPressed && !_action.IsJustReleased;
+    }
+
+    public bool IsActionJustPressed(PerformanceAction action)
+    {
+        var _action = PerformingActions[(int)action.ActionKind];
+        return _action is not null && _action.IsJustPressed;
+    }
+
+    public bool IsActionJustReleased(PerformanceAction action)
+    {
+        var _action = PerformingActions[(int)action.ActionKind];
+        return _action is not null && _action.IsJustReleased;
+    }
 
     public void SetChannel(MidiChannel channel)
     {
@@ -24,26 +49,26 @@ public abstract partial class ActionHandlerBase : Node
 
     private void _playNoteWithInputAction(PerformanceAction action, PerformanceActionKind actionKind, MidiNote note)
     {
-        if (action.IsActionPressed(actionKind))
+        if (action.IsJustPressed)
         {
-            if (_currentPlayingActions[(int)actionKind] is not null)
+            if (_currentPlayingMidiNote[(int)actionKind] is not null)
             {
-                _soundfontPlayer.PlayNoteOff(Channel, _currentPlayingActions[(int)actionKind]);
-                _currentPlayingActions[(int)actionKind] = null;
+                _soundfontPlayer.PlayNoteOff(Channel, _currentPlayingMidiNote[(int)actionKind]);
+                _currentPlayingMidiNote[(int)actionKind] = null;
             }
 
             _soundfontPlayer.PlayNoteOn(Channel, note.Note, note.Velocity);
-            _currentPlayingActions[(int)actionKind] = note;
+            _currentPlayingMidiNote[(int)actionKind] = note;
         }
-        if (action.IsActionReleased(actionKind))
+        if (action.IsJustReleased)
         {
-            if (_currentPlayingActions[(int)actionKind] is not null)
+            if (_currentPlayingMidiNote[(int)actionKind] is not null)
             {
-                _soundfontPlayer.PlayNoteOff(Channel, _currentPlayingActions[(int)actionKind]);
+                _soundfontPlayer.PlayNoteOff(Channel, _currentPlayingMidiNote[(int)actionKind]);
             }
 
             _soundfontPlayer.PlayNoteOff(Channel, note);
-            _currentPlayingActions[(int)actionKind] = null;
+            _currentPlayingMidiNote[(int)actionKind] = null;
         }
 
         _modulateWithAction(new PerformanceAction(PerformanceActionKind.SHARP, false, true));
@@ -55,45 +80,45 @@ public abstract partial class ActionHandlerBase : Node
 
     private void _modulateWithAction(PerformanceAction action)
     {
-        if (action.IsActionPressed(PerformanceActionKind.SHARP))
+        if (action.IsJustPressed && action.ActionKind.Equals(PerformanceActionKind.SHARP))
         {
-            _currentPlayingActions[(int)PerformanceActionKind.SHARP] = new MidiNote(0);
+            _currentPlayingMidiNote[(int)PerformanceActionKind.SHARP] = new MidiNote(0);
             _sharp = 1;
         }
-        if (action.IsActionReleased(PerformanceActionKind.SHARP))
+        if (action.IsJustReleased && action.ActionKind.Equals(PerformanceActionKind.SHARP))
         {
-            _currentPlayingActions[(int)PerformanceActionKind.SHARP] = null;
+            _currentPlayingMidiNote[(int)PerformanceActionKind.SHARP] = null;
             _sharp = 0;
         }
 
-        if (action.IsActionPressed(PerformanceActionKind.OCTAVE_UP))
+        if (action.IsJustPressed && action.ActionKind.Equals(PerformanceActionKind.OCTAVE_UP))
         {
-            _currentPlayingActions[(int)PerformanceActionKind.OCTAVE_UP] = new MidiNote(0);
+            _currentPlayingMidiNote[(int)PerformanceActionKind.OCTAVE_UP] = new MidiNote(0);
             _octave = 1;
         }
-        if (action.IsActionReleased(PerformanceActionKind.OCTAVE_UP))
+        if (action.IsJustReleased && action.ActionKind.Equals(PerformanceActionKind.OCTAVE_UP))
         {
-            _currentPlayingActions[(int)PerformanceActionKind.OCTAVE_UP] = null;
+            _currentPlayingMidiNote[(int)PerformanceActionKind.OCTAVE_UP] = null;
             _octave = 0;
         }
     }
 
     private void _onActionOn(PerformanceActionKind actionKind, int velocity)
     {
-        PerformHandler(new PerformanceAction(actionKind, true, false), new MidiNoteVelocity(velocity));
+        PerformHandler(new PerformanceAction(actionKind, true, false, new MidiNoteVelocity(velocity)));
     }
 
     private void _onActionOff(PerformanceActionKind actionKind)
     {
-        PerformHandler(new PerformanceAction(actionKind, false, true), new MidiNoteVelocity());
+        PerformHandler(new PerformanceAction(actionKind, false, true));
     }
 
-    public void PerformHandler(PerformanceAction action, MidiNoteVelocity? velocity = null)
+    public void PerformHandler(PerformanceAction action)
     {
-        if (velocity is null)
-        {
-            velocity = new MidiNoteVelocity();
-        }
+        PerformingActions[(int)action.ActionKind] = action;
+        EmitSignal(SignalName.OnAction);
+        var velocity = action.Velocity ?? new MidiNoteVelocity(100);
+
         if (action.ActionKind.Equals(PerformanceActionKind.SHARP) || action.ActionKind.Equals(PerformanceActionKind.OCTAVE_UP))
         {
             _modulateWithAction(action);
@@ -119,9 +144,9 @@ public abstract partial class ActionHandlerBase : Node
         //        {
         //            _soundfontPlayer.PlayNoteOff(Channel, new MidiNote(i));
         //        }
-        for (int i = 0; i < _currentPlayingActions.Length; i++)
+        for (int i = 0; i < _currentPlayingMidiNote.Length; i++)
         {
-            if (_currentPlayingActions[i] is not null)
+            if (_currentPlayingMidiNote[i] is not null)
             {
                 PerformHandler(new PerformanceAction((PerformanceActionKind)i, false, true));
             }

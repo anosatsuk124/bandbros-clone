@@ -102,18 +102,8 @@ public enum PerformanceActionKind
     OCTAVE_UP,
 }
 
-public sealed record PerformanceAction(PerformanceActionKind ActionKind, bool IsPressed, bool IsReleased)
+public sealed record PerformanceAction(PerformanceActionKind ActionKind, bool IsJustPressed, bool IsJustReleased, MidiNoteVelocity? Velocity = null)
 {
-    public bool IsActionPressed(PerformanceActionKind actionKind)
-    {
-        return IsPressed && ActionKind.Equals(actionKind);
-    }
-
-    public bool IsActionReleased(PerformanceActionKind actionKind)
-    {
-        return IsReleased && ActionKind.Equals(actionKind);
-    }
-
     public string ToActionName()
     {
         return ActionKind.ToActionName();

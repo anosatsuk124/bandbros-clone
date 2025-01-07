@@ -3,6 +3,8 @@ namespace BandBrosClone;
 using BandBrosClone.MusicNotation;
 using Godot;
 using Melanchall.DryWetMidi.Core;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -99,24 +101,42 @@ public partial class ChartCreatorDebugUi : Control
 			return;
 		}
 
-		ChartTrackSequencerBase[] sequencers = new ChartTrackSequencerBase[_chart.Tracks.Count];
-
 		for (int idx = 0; idx < _chart.Tracks.Count; idx++)
 		{
-			sequencers[idx] = new ChartTrackAutoPerformance(actionHandlers[idx], _chart.Tracks[idx]);
+			sequencers.Add(new ChartTrackAutoPerformance(actionHandlers[idx], _chart.Tracks[idx]));
 			AddChild(sequencers[idx]);
 		}
 
 		performanceManager.Reset();
 
-		var notesSequencer = new NotesSequencer(actionHandlers[0], _chart.Tracks[3]);
+		var notesSequencer = new NotesSequencer(actionHandlers[3], _chart.Tracks[3]);
 		notesSequencer.PostionOffset = new Vector2(0, 0);
 		notesSequencer.Parent = notesSequencerParent;
+		notesSequencer.DetectPointNode = detectPointNode;
 		notesSequencerParent.AddChild(notesSequencer);
 
-		var playEnumerators = sequencers.Select(sequencer => sequencer.Play(sequencer.chartTrack.Notes)).ToArray();
-		while (playEnumerators.Any(enumerator => enumerator.MoveNext())) ;
+		for (int idx = 0; idx < sequencers.Count; idx++)
+		{
+			_playEnumerators.Add(sequencers[idx].Play(_chart.Tracks[idx].Notes));
+		}
+
+		isPlaying = true;
 	}
 
+	public override void _Process(double delta)
+	{
+		base._Process(delta);
+		if (isPlaying)
+		{
+			foreach (var _ in _playEnumerators.Select(enumerator => enumerator.MoveNext())) ;
+		}
+	}
+
+	private List<ChartTrackSequencerBase> sequencers = new List<ChartTrackSequencerBase>();
+
+	private List<IEnumerator> _playEnumerators = new List<IEnumerator>();
+	private bool isPlaying = false;
+
 	[Export] public Node2D notesSequencerParent;
+	[Export] public Node2D detectPointNode;
 }

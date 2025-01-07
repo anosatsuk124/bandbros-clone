@@ -20,17 +20,51 @@ public partial class Note : NoteBase
 	public Sprite2D attackSprite { get; private set; }
 	public Sprite2D holdSprite { get; private set; }
 
-	public Note(PerformanceActionKind actionKind, MidiBeat midiBeat)
+	public Vector2 ReleasePosition => new Vector2(GlobalPosition.X + Beat, GlobalPosition.Y);
+	public Vector2 AttackPosition => GlobalPosition;
+
+	public Vector2 DetectPointPosition { get; set; }
+
+	public const float HOLD_WIDTH = 150;
+
+	public bool IsHold(float onset, float offset)
+	{
+		var detectPoint = DetectPointPosition.X;
+		return ReleasePosition.X >= detectPoint + offset;
+	}
+
+	public bool IsJustRelease(float onset, float offset)
+	{
+		var detectPoint = DetectPointPosition.X;
+		return ReleasePosition.X <= detectPoint + onset && ReleasePosition.X >= detectPoint + offset;
+	}
+
+	public bool IsAttack(float onset, float offset)
+	{
+		var detectPoint = DetectPointPosition.X;
+		return AttackPosition.X <= detectPoint + onset && AttackPosition.X >= detectPoint + offset;
+	}
+
+	public float Velocity { get; set; }
+
+	public Note(PerformanceActionKind actionKind, MidiBeat midiBeat, float velocity, Vector2 detectPointPosition)
 	{
 		_actionKind = actionKind;
 		_midiBeat = midiBeat;
+		Velocity = velocity;
+		this.DetectPointPosition = detectPointPosition;
 	}
 
 	public void SetBeat(MidiBeat midiBeat)
 	{
 		_midiBeat = midiBeat;
 		if (holdSprite is null) return;
-		holdSprite.Scale = new Vector2(midiBeat * 0.5f, 1);
+		holdSprite.Scale = new Vector2(midiBeat / HOLD_WIDTH * 0.5f, 1);
+	}
+
+	public void MoveNote(double deltaTime)
+	{
+		MoveLocalX((float)-deltaTime * Velocity);
 	}
 
 	public override void _Ready()
@@ -38,13 +72,12 @@ public partial class Note : NoteBase
 		attackSprite = new Sprite2D();
 		attackSprite.ZIndex = 1;
 		holdSprite = new Sprite2D();
-		holdSprite.Offset = new Vector2(150, 0);
-		holdSprite.Scale = new Vector2(0.5f, 1);
+		holdSprite.Offset = new Vector2(HOLD_WIDTH, 0);
+		holdSprite.Scale = new Vector2(0.5f, 0.7f);
 		holdSprite.Texture = GD.Load<Texture2D>(Constants.NOTE_IMAGES_PATH.PathJoin("base.png"));
 		holdSprite.ZIndex = 0;
 		AddChild(attackSprite);
 		AddChild(holdSprite);
-		Scale = new Vector2(0.3f, 0.3f);
 		SetActionKind(_actionKind);
 		SetBeat(_midiBeat);
 	}
