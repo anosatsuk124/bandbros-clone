@@ -19,9 +19,11 @@ public sealed partial class ChartTrackAutoPerformance : ChartTrackSequencerBase
 
     public override IEnumerator Play(IEnumerable<ChartNote> notes)
     {
+        var _startDeltaTime = actionHandler.performanceManager.DeltaTime;
+
         foreach (var note in notes)
         {
-            while (actionHandler.performanceManager.DeltaTime < note.duration.ToSeconds()) yield return null;
+            while (actionHandler.performanceManager.DeltaTime - _startDeltaTime < note.duration.ToSeconds()) yield return null;
             switch (note)
             {
                 case ChartNoteHold hold:

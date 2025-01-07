@@ -13,7 +13,7 @@ public partial class Note : NoteBase
 	}
 	private PerformanceActionKind _actionKind;
 
-	public MidiNote midiNote { get; private set; }
+	public ChartNoteHold chartNote { get; private set; }
 
 	public override MidiTime Duration { get => _midiTime; protected set => SetBeat(value); }
 
@@ -25,45 +25,27 @@ public partial class Note : NoteBase
 	public Vector2 ReleasePosition => new Vector2(GlobalPosition.X + (float)Duration.ToSeconds(), GlobalPosition.Y);
 	public Vector2 AttackPosition => GlobalPosition;
 
-	public Vector2 DetectPointPosition { get; set; }
-
+	public bool IsHolding { get; set; } = false;
+	public bool HasReleased { get => _hasReleased; set { _hasReleased = value; Visible = !value; } }
+	private bool _hasReleased = false;
 
 	public const float HOLD_WIDTH = 150;
 
-	public bool IsHold(float onset, float offset)
-	{
-		var detectPoint = DetectPointPosition.X;
-		return ReleasePosition.X >= detectPoint + offset;
-	}
-
-	public bool IsJustRelease(float onset, float offset)
-	{
-		var detectPoint = DetectPointPosition.X;
-		return ReleasePosition.X <= detectPoint + onset && ReleasePosition.X >= detectPoint + offset;
-	}
-
-	public bool IsAttack(float onset, float offset)
-	{
-		var detectPoint = DetectPointPosition.X;
-		return AttackPosition.X <= detectPoint + onset && AttackPosition.X >= detectPoint + offset;
-	}
-
 	public float Velocity { get; set; }
 
-	public Note(PerformanceActionKind actionKind, MidiTime midiTime, float velocity, Vector2 detectPointPosition, MidiNote note)
+	public Note(PerformanceActionKind actionKind, MidiTime midiTime, float velocity, ChartNoteHold note)
 	{
 		_actionKind = actionKind;
 		_midiTime = midiTime;
 		Velocity = velocity;
-		midiNote = note;
-		this.DetectPointPosition = detectPointPosition;
+		chartNote = note;
 	}
 
 	public void SetBeat(MidiTime midiTime)
 	{
 		_midiTime = Duration;
 		if (holdSprite is null) return;
-		holdSprite.Scale = new Vector2((float)Duration.ToSeconds() * Velocity / HOLD_WIDTH * 0.5f, holdSprite.Scale.Y);
+		holdSprite.Scale = new Vector2((float)(Duration.ToSeconds() * HOLD_WIDTH * 0.5), holdSprite.Scale.Y);
 	}
 
 	public void MoveNote(double deltaTime)
@@ -133,7 +115,17 @@ public partial class Note : NoteBase
 					attackSprite.Texture = GD.Load<Texture2D>(imagePath.PathJoin("circle_up.png"));
 					break;
 				}
-			default: throw new ArgumentOutOfRangeException();
+			// TODO: IMPLEMENT SHARP AND OCTAVE UP
+			case PerformanceActionKind.SHARP:
+				{
+					Visible = false;
+					break;
+				}
+			case PerformanceActionKind.OCTAVE_UP:
+				{
+					Visible = false;
+					break;
+				}
 		}
 	}
 }

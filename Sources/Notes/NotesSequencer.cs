@@ -11,106 +11,132 @@ using Godot;
 
 public partial class NotesSequencer : ChartTrackSequencerBase
 {
-    public List<Note?> Notes { get; } = new List<Note?>();
+    public List<Note[]> Notes { get; } = new List<Note[]>();
 
     public Node2D? Parent { get; set; }
 
     public Vector2 PostionOffset { get; set; } = new Vector2(0, 0);
 
 
-    public readonly double DetectOffsetSeconds = 0.1f;
+    public readonly double DetectOffsetSeconds = 0.04;
 
-    public readonly double DetectOnsetSeconds = -0.1;
 
     public int CurrentNotesIndex = 0;
 
-    public Vector2 DetectPointPosition => DetectPointNode!.GlobalPosition;
+    public double _startDeltaTime = 0;
+
+    public double DeltaTime
+    {
+        get => actionHandler.performanceManager!.DeltaTime - _startDeltaTime;
+    }
 
     [Export] public Node2D? DetectPointNode { get; set; }
 
     public NotesSequencer(ActionHandlerBase actionHandlerBase, ChartTrack chartTrack) : base(actionHandlerBase, chartTrack)
     {
-        chartNotes = chartTrack.Notes.Select(note => note is ChartNoteHold hold ? hold : null).Where(note => note is not null).ToArray()!;
     }
 
-    public float Velocity { get; private set; } = 10000;
+    public float Velocity { get; private set; } = 1000;
 
     public override void _Ready()
     {
         base._Ready();
         Parent!.Scale = new Vector2(0.1f, 0.1f);
         _Init();
-    }
 
-    public override void _Process(double delta)
-    {
-        Play(delta);
+        _startDeltaTime = actionHandler.performanceManager!.DeltaTime;
     }
 
     public void Play(double delta)
     {
-        UpdateCurrentNotesIndex();
-        judgeNote();
+        var deltaTime = DeltaTime;
+        if (CurrentNotesIndex < Notes.Count && _updateCurrentNotesIndex(deltaTime)) judgeNote(deltaTime);
         MoveNotes(delta);
     }
 
-    private void UpdateCurrentNotesIndex()
+
+    private bool _updateCurrentNotesIndex(double deltaTime)
     {
-        var deltaTime = actionHandler.performanceManager!.DeltaTime;
-        var currentNote = chartNotes[CurrentNotesIndex];
-        if (currentNote is null) return;
-        if (currentNote.endTime.ToSeconds() < deltaTime + DetectOffsetSeconds) CurrentNotesIndex++;
+        var currentNotes = Notes[CurrentNotesIndex];
+        if (currentNotes.Count().Equals(0))
+        {
+            CurrentNotesIndex++;
+            return true;
+        }
+        var lastEndTime = currentNotes.Select(note => note.chartNote.endTime.ToSeconds()).Max();
+        if (deltaTime >= lastEndTime - DetectOffsetSeconds)
+        {
+            CurrentNotesIndex++;
+        }
+        return true;
     }
 
-    private ChartNoteHold[] chartNotes;
-
-    private void judgeNote()
+    private void judgeNote(double deltaTime)
     {
-        var deltaTime = actionHandler.performanceManager!.DeltaTime;
 
         var actions = actionHandler.PerformingActions;
         if (actions is null) return;
 
-        var currentNote = chartNotes[CurrentNotesIndex];
+        Note[] currentNotes = Notes[CurrentNotesIndex];
 
-        var noteKinds = PerformanceActionKindExtension.FromMidiNote(currentNote!.note.Note, actionHandler.Scale);
-        var startTime = currentNote.startTime.ToSeconds();
-        var endTime = currentNote.endTime.ToSeconds();
-
-        foreach (var action in actions)
+        for (int i = 0; i < currentNotes.Length; i++)
         {
-            if (action is null) continue;
-            foreach (var noteKind in noteKinds)
+            foreach (var action in actions)
             {
-                if (!action.ActionKind.Equals(noteKind)) continue;
+                if (action is null) continue;
+                Note note = currentNotes[i];
+                var noteKind = note.actionKind;
+                var startTime = note.chartNote.startTime.ToSeconds();
+                var endTime = note.chartNote.endTime.ToSeconds();
+
+                var canAttack = (deltaTime >= startTime - DetectOffsetSeconds) ||
+                                (deltaTime <= startTime + DetectOffsetSeconds);
+                var canRelease = (deltaTime >= endTime - DetectOffsetSeconds) ||
+                                 (deltaTime <= endTime + DetectOffsetSeconds);
+
+                if (note.HasReleased) continue;
 
                 GameManager.Info($"Current Note: {noteKind}");
                 GameManager.Info($"Current Action: {action.ActionKind}");
+                //                GameManager.Info(actionHandler.IsActionJustPressed(action) ? "Just Pressed" : "Not Just Pressed");
+                //                GameManager.Info(actionHandler.IsActionJustReleased(action) ? "Just Released" : "Not Just Released");
 
-                if (actionHandler.IsActionJustPressed(action) && deltaTime >= startTime + DetectOnsetSeconds && deltaTime <= startTime + DetectOffsetSeconds)
+                if (!note.IsHolding && actionHandler.IsActionJustPressed(action) && canAttack)
                 {
                     GameManager.Info($"Note {noteKind} is HIT");
+                    note.IsHolding = true;
+                    if (endTime - startTime < 0.5)
+                    {
+                        GameManager.Info($"Note {noteKind} is RELEASED, time: {endTime - startTime}");
+                        note.HasReleased = true;
+                    }
                 }
-                else if (actionHandler.IsActionJustReleased(action) && deltaTime >= endTime + DetectOnsetSeconds && deltaTime <= endTime + DetectOffsetSeconds)
+                else if (note.IsHolding && actionHandler.IsActionJustReleased(action) && !canRelease)
+                {
+                    GameManager.Info($"Note {noteKind} is MISSED");
+                    note.IsHolding = false;
+                    note.HasReleased = true;
+                }
+                else if (note.IsHolding && actionHandler.IsActionJustReleased(action) && canRelease)
                 {
                     GameManager.Info($"Note {noteKind} is RELEASED");
-                    Notes[CurrentNotesIndex]!.Visible = false;
-                }
-                else if (actionHandler.IsActionPressing(action) && deltaTime >= startTime + DetectOnsetSeconds && deltaTime <= endTime + DetectOffsetSeconds)
-                {
-                    GameManager.Info($"Note {noteKind} is HOLDING");
+                    note.HasReleased = true;
                 }
             }
         }
+
     }
 
     public void MoveNotes(double deltaTime)
     {
         for (int idx = 0; idx < Notes.Count; idx++)
         {
-            var note = Notes[idx];
-            if (note is null) continue;
-            note.MoveNote(deltaTime);
+            var notes = Notes[idx];
+            foreach (var note in notes)
+            {
+                if (note is null) continue;
+                note.MoveNote(deltaTime);
+            }
         }
     }
 
@@ -121,7 +147,7 @@ public partial class NotesSequencer : ChartTrackSequencerBase
         while (player.MoveNext())
         {
             var noteBase = player.Current;
-            if (noteBase is Note note)
+            if (noteBase is Note[] note)
             {
                 Notes.Add(note);
             }
@@ -143,14 +169,15 @@ public partial class NotesSequencer : ChartTrackSequencerBase
             }
 
             var actionKinds = PerformanceActionKindExtension.FromMidiNote(hold.note.Note, actionHandler.Scale);
-            foreach (var actionKind in actionKinds)
+            var noteNodes = new Note[actionKinds.Length];
+            foreach (var (idx, actionKind) in actionKinds.Select((actionKind, idx) => (idx, actionKind)))
             {
-                if (actionKind.Equals(PerformanceActionKind.OCTAVE_UP) || actionKind.Equals(PerformanceActionKind.SHARP)) continue;
-                var note = new Note(actionKind, hold.endTime.Sub(hold.startTime), Velocity, DetectPointPosition, hold.note);
-                note.Position = new Vector2((float)hold.startTime.ToSeconds() * Velocity, note.Position.Y) + PostionOffset;
+                var note = new Note(actionKind, hold.endTime.Sub(hold.startTime), Velocity, hold);
                 Parent!.AddChild(note);
-                yield return note;
+                note.Position = new Vector2((float)hold.startTime.ToSeconds() * Velocity, note.Position.Y) + PostionOffset;
+                noteNodes[idx] = note;
             }
+            yield return noteNodes;
 
             previouseEndTimeUsec = hold.endTime;
         }

@@ -109,7 +109,7 @@ public partial class ChartCreatorDebugUi : Control
 
 		performanceManager.Reset();
 
-		notesSequencer = new NotesSequencer(actionHandlers[3], _chart.Tracks[3]);
+		notesSequencer = new NotesSequencer(actionHandlers[2], _chart.Tracks[2]);
 		notesSequencer.PostionOffset = new Vector2(0, 0);
 		notesSequencer.Parent = notesSequencerParent;
 		notesSequencer.DetectPointNode = detectPointNode;
