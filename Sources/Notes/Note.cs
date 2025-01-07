@@ -45,7 +45,8 @@ public partial class Note : NoteBase
 	{
 		_midiTime = Duration;
 		if (holdSprite is null) return;
-		holdSprite.Scale = new Vector2((float)(Duration.ToSeconds() * HOLD_WIDTH * 0.5), holdSprite.Scale.Y);
+		if (midiTime.ToSeconds() < 0.5) return;
+		holdSprite.Scale = new Vector2((float)(Duration.ToSeconds() * 0.5), holdSprite.Scale.Y);
 	}
 
 	public void MoveNote(double deltaTime)

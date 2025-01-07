@@ -109,7 +109,7 @@ public partial class ChartCreatorDebugUi : Control
 
 		performanceManager.Reset();
 
-		notesSequencer = new NotesSequencer(actionHandlers[2], _chart.Tracks[2]);
+		notesSequencer = new NotesSequencer(actionHandlers[3], _chart.Tracks[3]);
 		notesSequencer.PostionOffset = new Vector2(0, 0);
 		notesSequencer.Parent = notesSequencerParent;
 		notesSequencer.DetectPointNode = detectPointNode;
@@ -121,14 +121,11 @@ public partial class ChartCreatorDebugUi : Control
 		}
 
 		isPlaying = true;
+		while (_playEnumerators.Any(enumerator => enumerator.MoveNext())) ;
 	}
 
 	public override void _Process(double delta)
 	{
-		if (isPlaying)
-		{
-			foreach (var _ in _playEnumerators.Select(enumerator => enumerator.MoveNext())) ;
-		}
 	}
 
 	private NotesSequencer notesSequencer;

@@ -47,11 +47,21 @@ public partial class NotesSequencer : ChartTrackSequencerBase
         _startDeltaTime = actionHandler.performanceManager!.DeltaTime;
     }
 
+    public override void _Process(double delta)
+    {
+        Play(delta);
+    }
+
     public void Play(double delta)
     {
         var deltaTime = DeltaTime;
-        if (CurrentNotesIndex < Notes.Count && _updateCurrentNotesIndex(deltaTime)) judgeNote(deltaTime);
+        if (CurrentNotesIndex >= Notes.Count)
+        {
+            return;
+        }
+        judgeNote(deltaTime);
         MoveNotes(delta);
+        _updateCurrentNotesIndex(deltaTime);
     }
 
 
