@@ -9,7 +9,7 @@ using Godot;
 
 public sealed partial class ChartTrackAutoPerformance : ChartTrackSequencerBase
 {
-    private Timer _timer;
+    private IEnumerator enumerator;
 
     public ChartTrackAutoPerformance(ActionHandlerBase actionHandler, ChartTrack chartTrack) : base(actionHandler, chartTrack)
     {
@@ -17,50 +17,34 @@ public sealed partial class ChartTrackAutoPerformance : ChartTrackSequencerBase
 
     public override void _Ready()
     {
-        _timer = new Timer();
-        _timer.OneShot = true;
-        AddChild(_timer);
+        enumerator = Play(chartTrack.Notes);
     }
 
-    private double initTime;
-
-    private void _Init()
+    public override void _PhysicsProcess(double delta)
     {
-        initTime = _performanceManager.DeltaTime;
-    }
-
-
-    private Action _play(double duration, ChartNote note)
-    {
-        return async () =>
+        if (enumerator.MoveNext())
         {
-            await HandleChartNote(note);
-        };
-    }
-
-    public override IEnumerator Play(IEnumerable<ChartNote> notes)
-    {
-        _Init();
-        foreach (var note in notes)
-        {
-            var currentDuration = note.duration.ToSeconds();
-            var timeoffset = _performanceManager.DeltaTime - initTime;
-
-            var play = _play(currentDuration, note);
-
-            if (timeoffset < currentDuration)
-            {
-                GetTree().CreateTimer(currentDuration - timeoffset).Timeout += play;
-            }
-            else
-            {
-                play();
-            }
-            yield return null;
+            return;
         }
     }
 
-    public async Task HandleChartNote(ChartNote note)
+
+    public override IEnumerator Play(IEnumerable<ChartNote> notes)
+    {
+        foreach (var note in notes)
+        {
+            var currentDuration = note.duration.ToSeconds();
+            var timeoffset = _performanceManager.DeltaTime;
+
+            if (timeoffset < currentDuration)
+            {
+                while (_performanceManager.DeltaTime < currentDuration) yield return null;
+            }
+            HandleChartNote(note);
+        }
+    }
+
+    public void HandleChartNote(ChartNote note)
     {
         switch (note)
         {
@@ -78,15 +62,17 @@ public sealed partial class ChartTrackAutoPerformance : ChartTrackSequencerBase
                     }
                     SetScale(prevScale);
 
-                    await ToSignal(GetTree().CreateTimer(hold.endTime.Sub(hold.startTime).ToSeconds()), Timer.SignalName.Timeout);
+                    GetTree().CreateTimer(hold.endTime.Sub(hold.startTime).ToSeconds()).Timeout += () =>
+                        {
+                            SetScale(currentScale);
+                            foreach (var actionKind in actionKinds)
+                            {
+                                GameManager.Info($"Channel: {midiChannel}, Release Action: {actionKind.ToActionName()}");
+                                actionHandler.PerformHandler(new PerformanceAction(actionKind, false, true, hold.note.Velocity));
+                            }
+                            SetScale(prevScale);
+                        };
 
-                    SetScale(currentScale);
-                    foreach (var actionKind in actionKinds)
-                    {
-                        GameManager.Info($"Channel: {midiChannel}, Release Action: {actionKind.ToActionName()}");
-                        actionHandler.PerformHandler(new PerformanceAction(actionKind, false, true, hold.note.Velocity));
-                    }
-                    SetScale(prevScale);
                     break;
                 }
             case ChartNoteChangeInstrument changeInstrument:

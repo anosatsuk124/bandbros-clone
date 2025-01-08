@@ -101,31 +101,18 @@ public partial class ChartCreatorDebugUi : Control
 			return;
 		}
 
+		performanceManager.Reset();
+
 		for (int idx = 0; idx < _chart.Tracks.Count; idx++)
 		{
 			sequencers.Add(new ChartTrackAutoPerformance(actionHandlers[idx], _chart.Tracks[idx]));
 			AddChild(sequencers[idx]);
 		}
 
-		performanceManager.Reset();
-
 		notesSequencer = new NotesSequencer(actionHandlers[3], _chart.Tracks[3]);
-		notesSequencer.PostionOffset = new Vector2(0, 0);
 		notesSequencer.Parent = notesSequencerParent;
 		notesSequencer.DetectPointNode = detectPointNode;
 		notesSequencerParent.AddChild(notesSequencer);
-
-		for (int idx = 0; idx < sequencers.Count; idx++)
-		{
-			_playEnumerators.Add(sequencers[idx].Play(_chart.Tracks[idx].Notes));
-		}
-
-		isPlaying = true;
-		while (_playEnumerators.Any(enumerator => enumerator.MoveNext())) ;
-	}
-
-	public override void _Process(double delta)
-	{
 	}
 
 	private NotesSequencer notesSequencer;

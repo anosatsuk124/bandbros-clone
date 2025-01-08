@@ -22,14 +22,11 @@ public partial class Note : NoteBase
 	public Sprite2D attackSprite { get; private set; }
 	public Sprite2D holdSprite { get; private set; }
 
-	public Vector2 ReleasePosition => new Vector2(GlobalPosition.X + (float)Duration.ToSeconds(), GlobalPosition.Y);
-	public Vector2 AttackPosition => GlobalPosition;
-
 	public bool IsHolding { get; set; } = false;
-	public bool HasReleased { get => _hasReleased; set { _hasReleased = value; Visible = !value; } }
-	private bool _hasReleased = false;
+	public bool HasReleased { get; set; } = false;
 
 	public const float HOLD_WIDTH = 150;
+	public const float NOTE_WIDTH = 150;
 
 	public float Velocity { get; set; }
 
@@ -41,17 +38,25 @@ public partial class Note : NoteBase
 		chartNote = note;
 	}
 
+	public override void _Process(double delta)
+	{
+		if (HasReleased)
+		{
+			Visible = false;
+		}
+	}
+
 	public void SetBeat(MidiTime midiTime)
 	{
-		_midiTime = Duration;
 		if (holdSprite is null) return;
-		if (midiTime.ToSeconds() < 0.5) return;
+		if (midiTime.ToSeconds() < 0.2) return;
+		holdSprite.Visible = true;
 		holdSprite.Scale = new Vector2((float)(Duration.ToSeconds() * 0.5), holdSprite.Scale.Y);
 	}
 
 	public void MoveNote(double deltaTime)
 	{
-		MoveLocalX((float)-deltaTime * Velocity);
+		MoveLocalX((float)(-deltaTime * (double)Velocity));
 	}
 
 	public override void _Ready()
@@ -65,10 +70,8 @@ public partial class Note : NoteBase
 		holdSprite.Scale = new Vector2(0.5f, 0.7f);
 		holdSprite.Texture = GD.Load<Texture2D>(Constants.NOTE_IMAGES_PATH.PathJoin("base.png"));
 		holdSprite.ZIndex = 0;
+		holdSprite.Visible = false;
 		AddChild(holdSprite);
-
-		attackSprite.MoveLocalX(-150);
-		holdSprite.MoveLocalX(-150);
 
 		SetActionKind(_actionKind);
 		SetBeat(_midiTime);
