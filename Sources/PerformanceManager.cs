@@ -6,6 +6,7 @@ using Godot;
 [GlobalClass]
 public partial class PerformanceManager : Node
 {
+    public const double DEFAULT_DELTA_OFFSET = -5;
     public Scale Scale { get; set; } = Constants.DEFAULT_SCALE;
 
     public MidiChannel PlayerChannel { get; set; } = new MidiChannel(0);
@@ -57,8 +58,8 @@ public partial class PerformanceManager : Node
         SoundfontPlayer.SetInstrument(channel, bank, program);
     }
 
-    public void SetDeltaZero()
+    public void SetDeltaZero(double offset = DEFAULT_DELTA_OFFSET)
     {
-        DeltaTime = 0;
+        DeltaTime = DEFAULT_DELTA_OFFSET;
     }
 }

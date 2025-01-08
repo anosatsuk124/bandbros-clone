@@ -22,6 +22,8 @@ public partial class Note : NoteBase
 	public Sprite2D attackSprite { get; private set; }
 	public Sprite2D holdSprite { get; private set; }
 
+	public MidiTempo midiTempo;
+
 	public bool IsHolding { get; set; } = false;
 	public bool HasReleased { get; set; } = false;
 
@@ -30,28 +32,25 @@ public partial class Note : NoteBase
 
 	public float Velocity { get; set; }
 
-	public Note(PerformanceActionKind actionKind, MidiTime midiTime, float velocity, ChartNoteHold note)
+	public Note(PerformanceActionKind actionKind, MidiTime midiTime, float velocity, ChartNoteHold note, MidiTempo tempo) : base()
 	{
 		_actionKind = actionKind;
 		_midiTime = midiTime;
 		Velocity = velocity;
 		chartNote = note;
+		midiTempo = tempo;
 	}
 
 	public override void _Process(double delta)
 	{
-		if (HasReleased)
-		{
-			Visible = false;
-		}
 	}
 
 	public void SetBeat(MidiTime midiTime)
 	{
 		if (holdSprite is null) return;
-		if (midiTime.ToSeconds() < 0.2) return;
+		// if (midiTime.ToSeconds() < 0.2) return;
 		holdSprite.Visible = true;
-		holdSprite.Scale = new Vector2((float)(Duration.ToSeconds() * 0.5), holdSprite.Scale.Y);
+		holdSprite.Scale = new Vector2((float)(Convert.ToDouble(midiTime.time) / Convert.ToDouble(midiTempo.microSecondsPerQuarterNote) * 1000), holdSprite.Scale.Y);
 	}
 
 	public void MoveNote(double deltaTime)

@@ -11,7 +11,7 @@ using Godot;
 
 public partial class NotesSequencer : ChartTrackSequencerBase
 {
-    public List<Note[]> Notes { get; } = new List<Note[]>();
+    public List<Note?[]> Notes { get; } = new List<Note?[]>();
 
     public Node2D? Parent { get; set; }
 
@@ -54,7 +54,7 @@ public partial class NotesSequencer : ChartTrackSequencerBase
             return;
         }
         judgeNote(deltaTime);
-        MoveNotes(delta);
+        MoveNotes(delta, deltaTime);
         _updateCurrentNotesIndex(deltaTime);
     }
 
@@ -67,9 +67,20 @@ public partial class NotesSequencer : ChartTrackSequencerBase
             CurrentNotesIndex++;
             return true;
         }
-        var lastEndTime = currentNotes.Select(note => note.chartNote.endTime.ToSeconds()).Max();
+        var lastEndTime = currentNotes.Where(n => n is not null).Select(note => note!.chartNote.endTime.ToSeconds()).Max();
         if (deltaTime >= lastEndTime)
         {
+            for (int i = 0; i < currentNotes.Length; i++)
+            {
+                var note = currentNotes[i];
+                if (note is null) continue;
+                if (note.HasReleased)
+                {
+                    note.Visible = false;
+                    note.QueueFree();
+                    currentNotes[i] = null;
+                }
+            }
             CurrentNotesIndex++;
         }
         return true;
@@ -80,7 +91,8 @@ public partial class NotesSequencer : ChartTrackSequencerBase
         var actions = actionHandler.PerformingActions;
         if (actions is null) return;
 
-        Note[] currentNotes = Notes[CurrentNotesIndex];
+        Note[] currentNotes = Notes[CurrentNotesIndex]!;
+        if (currentNotes is null) return;
 
         for (int i = 0; i < currentNotes.Length; i++)
         {
@@ -136,15 +148,16 @@ public partial class NotesSequencer : ChartTrackSequencerBase
 
     }
 
-    public void MoveNotes(double deltaTime)
+    public void MoveNotes(double delta, double deltaTime)
     {
+        if (deltaTime < 0) return;
         for (int idx = 0; idx < Notes.Count; idx++)
         {
             var notes = Notes[idx];
             foreach (var note in notes)
             {
                 if (note is null) continue;
-                note.MoveNote(deltaTime);
+                note.MoveNote(delta);
             }
         }
     }
@@ -182,7 +195,7 @@ public partial class NotesSequencer : ChartTrackSequencerBase
             var noteNodes = new Note[actionKinds.Length];
             foreach (var (idx, actionKind) in actionKinds.Select((actionKind, idx) => (idx, actionKind)))
             {
-                var note = new Note(actionKind, hold.endTime.Sub(hold.startTime), Velocity, hold);
+                var note = new Note(actionKind, hold.endTime.Sub(hold.startTime), Velocity, hold, chartTrack.Tempo);
                 Parent!.AddChild(note);
                 note.Position += new Vector2((float)hold.startTime.ToSeconds() * Velocity, 0);
                 noteNodes[idx] = note;
