@@ -50,7 +50,7 @@ public partial class Note : NoteBase
 		if (holdSprite is null) return;
 		// if (midiTime.ToSeconds() < 0.2) return;
 		holdSprite.Visible = true;
-		holdSprite.Scale = new Vector2((float)(Convert.ToDouble(midiTime.time) / Convert.ToDouble(midiTempo.microSecondsPerQuarterNote) * 1000), holdSprite.Scale.Y);
+		holdSprite.Scale = new Vector2((float)(midiTime.ToSeconds() * (double)Velocity / HOLD_WIDTH * 0.5), holdSprite.Scale.Y);
 	}
 
 	public void MoveNote(double deltaTime)
