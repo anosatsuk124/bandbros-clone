@@ -16,7 +16,7 @@ public partial class NotesSequencer : ChartTrackSequencerBase
     public Node2D? Parent { get; set; }
 
 
-    public readonly double DetectOffsetSeconds = 0.10;
+    public readonly double DetectOffsetSeconds = 0.05;
 
 
     public int CurrentNotesIndex = 0;
@@ -49,12 +49,12 @@ public partial class NotesSequencer : ChartTrackSequencerBase
     public void Play(double delta)
     {
         var deltaTime = DeltaTime;
+        MoveNotes(delta, deltaTime);
         if (CurrentNotesIndex >= Notes.Count)
         {
             return;
         }
         judgeNote(deltaTime);
-        MoveNotes(delta, deltaTime);
         _updateCurrentNotesIndex(deltaTime);
     }
 
@@ -108,11 +108,11 @@ public partial class NotesSequencer : ChartTrackSequencerBase
                                (deltaTime <= startTime + DetectOffsetSeconds);
                 //var canAttack = (deltaTime >= startTime) ||
                 //             (deltaTime <= startTime + DetectOffsetSeconds);
-                // var canRelease = (deltaTime >= endTime - DetectOffsetSeconds) ||
-                //                  (deltaTime <= endTime + DetectOffsetSeconds);
+                var canRelease = (deltaTime >= endTime - DetectOffsetSeconds) ||
+                                 (deltaTime <= endTime + DetectOffsetSeconds);
                 // var canRelease = (deltaTime >= endTime - DetectOffsetSeconds) ||
                 //                  (deltaTime <= endTime);
-                var canRelease = deltaTime <= endTime - DetectOffsetSeconds;
+                // var canRelease = deltaTime <= endTime - DetectOffsetSeconds;
 
                 if (action.ActionKind != noteKind) continue;
                 if (note.HasReleased) continue;
