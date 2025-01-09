@@ -28,7 +28,6 @@ public partial class Note : NoteBase
 	public bool HasReleased { get; set; } = false;
 
 	public const float HOLD_WIDTH = 150;
-	public const float NOTE_WIDTH = 150;
 
 	public float Velocity { get; set; }
 
@@ -121,12 +120,18 @@ public partial class Note : NoteBase
 			// TODO: IMPLEMENT SHARP AND OCTAVE UP
 			case PerformanceActionKind.SHARP:
 				{
-					Visible = false;
+					attackSprite.Texture = GD.Load<Texture2D>(imagePath.PathJoin("sharp.png"));
+					attackSprite.Position += new Vector2(0, -(300 + 50));
+					holdSprite.Texture = GD.Load<Texture2D>(imagePath.PathJoin("meta_base.png"));
+					holdSprite.Position += new Vector2(0, -(300 + 50));
 					break;
 				}
 			case PerformanceActionKind.OCTAVE_UP:
 				{
-					Visible = false;
+					attackSprite.Texture = GD.Load<Texture2D>(imagePath.PathJoin("octave.png"));
+					attackSprite.Position += new Vector2(0, 300 + 50);
+					holdSprite.Texture = GD.Load<Texture2D>(imagePath.PathJoin("meta_base.png"));
+					holdSprite.Position += new Vector2(0, 300 + 50);
 					break;
 				}
 		}

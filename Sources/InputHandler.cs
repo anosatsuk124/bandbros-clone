@@ -13,33 +13,27 @@ public sealed partial class InputHandler : ActionHandlerBase
 {
     public override MidiChannel Channel { get => performanceManager!.PlayerChannel; set { performanceManager!.PlayerChannel = value; } }
 
-    public override void _PhysicsProcess(double delta)
-    {
-        _inputHandler();
-    }
-
     private bool[] _currentPlayingActions = new bool[Enum.GetValues<PerformanceActionKind>().Length];
 
     private MidiNoteVelocity _currentVelocity = new MidiNoteVelocity(100);
 
-    private void _inputHandler()
+    public void InputHandle()
     {
         foreach (var action in Enum.GetValues<PerformanceActionKind>())
         {
             var isActionPlaying = _currentPlayingActions[(int)action];
-            var isActionJustPressed = Input.IsActionJustPressed(action.ToActionName());
-            var isActionReleased = Input.IsActionJustReleased(action.ToActionName());
+            var isActionPressed = Input.IsActionPressed(action.ToActionName());
+            var isActionReleased = !isActionPressed;
 
-            if ((isActionPlaying && isActionJustPressed) || (!isActionPlaying && !isActionJustPressed)) continue;
+            if ((isActionPlaying && isActionPressed) || (!isActionPlaying && !isActionPressed)) continue;
 
+            PerformHandler(new PerformanceAction(action, isActionPressed, isActionReleased, _currentVelocity));
             if (!isActionPlaying)
             {
-                PerformHandler(new PerformanceAction(action, isActionJustPressed, isActionReleased, _currentVelocity));
                 _currentPlayingActions[(int)action] = true;
             }
             else
             {
-                PerformHandler(new PerformanceAction(action, isActionJustPressed, isActionReleased, _currentVelocity));
                 _currentPlayingActions[(int)action] = false;
             }
         }

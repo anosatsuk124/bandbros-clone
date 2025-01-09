@@ -29,11 +29,12 @@ layout_mode = 2
 PerformanceManager = NodePath("../../PerformanceManager")
 metadata/_tab_index = 0
 
-[node name="ChartCreatorDebugUi" parent="TabContainer" node_paths=PackedStringArray("performanceManager", "notesSequencerParent", "detectPointNode") instance=ExtResource("4_46fn1")]
+[node name="ChartCreatorDebugUi" parent="TabContainer" node_paths=PackedStringArray("performanceManager", "notesSequencerParent", "detectPointNode", "inputHandler") instance=ExtResource("4_46fn1")]
 layout_mode = 2
 performanceManager = NodePath("../../PerformanceManager")
 notesSequencerParent = NodePath("../../SequencerParent/Marker2D")
 detectPointNode = NodePath("../../SequencerParent/Marker2D")
+inputHandler = NodePath("../../InputHandler")
 metadata/_tab_index = 1
 
 [node name="SequencerParent" type="Node2D" parent="."]

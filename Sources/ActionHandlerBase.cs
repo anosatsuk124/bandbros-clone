@@ -47,7 +47,7 @@ public abstract partial class ActionHandlerBase : Node
 
     private void _playNoteWithInputAction(PerformanceAction action, PerformanceActionKind actionKind, MidiNote note)
     {
-        if (action.IsJustPressed)
+        if (action.IsJustPressed && action.ActionKind.Equals(actionKind))
         {
             if (_currentPlayingMidiNote[(int)actionKind] is not null)
             {
@@ -58,7 +58,7 @@ public abstract partial class ActionHandlerBase : Node
             _soundfontPlayer.PlayNoteOn(Channel, note.Note, note.Velocity);
             _currentPlayingMidiNote[(int)actionKind] = note;
         }
-        if (action.IsJustReleased)
+        else if (action.IsJustReleased && action.ActionKind.Equals(actionKind))
         {
             if (_currentPlayingMidiNote[(int)actionKind] is not null)
             {

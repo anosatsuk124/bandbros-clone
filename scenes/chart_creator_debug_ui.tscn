@@ -20,6 +20,16 @@ offset_bottom = 182.0
 layout_mode = 2
 metadata/_edit_use_anchors_ = true
 
+[node name="Label" type="Label" parent="PanelContainer/VBoxContainer"]
+layout_mode = 2
+text = "Track"
+
+[node name="TrackInput" type="LineEdit" parent="PanelContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "3"
+placeholder_text = "Track"
+
 [node name="MidiFilePath" type="LineEdit" parent="PanelContainer/VBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2

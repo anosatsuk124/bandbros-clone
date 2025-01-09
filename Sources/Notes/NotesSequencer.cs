@@ -16,7 +16,7 @@ public partial class NotesSequencer : ChartTrackSequencerBase
     public Node2D? Parent { get; set; }
 
 
-    public readonly double DetectOffsetSeconds = 0.02;
+    public readonly double DetectOffsetSeconds = 0.10;
 
 
     public int CurrentNotesIndex = 0;
@@ -104,15 +104,17 @@ public partial class NotesSequencer : ChartTrackSequencerBase
                 var startTime = note.chartNote.startTime.ToSeconds();
                 var endTime = note.chartNote.endTime.ToSeconds();
 
-                //var canAttack = (deltaTime >= startTime - DetectOffsetSeconds) ||
-                //               (deltaTime <= startTime + DetectOffsetSeconds);
-                var canAttack = (deltaTime >= startTime) ||
-                                (deltaTime <= startTime + DetectOffsetSeconds);
-                var canRelease = (deltaTime >= endTime - DetectOffsetSeconds) ||
-                                 (deltaTime <= endTime + DetectOffsetSeconds);
+                var canAttack = (deltaTime >= startTime - DetectOffsetSeconds) ||
+                               (deltaTime <= startTime + DetectOffsetSeconds);
+                //var canAttack = (deltaTime >= startTime) ||
+                //             (deltaTime <= startTime + DetectOffsetSeconds);
+                // var canRelease = (deltaTime >= endTime - DetectOffsetSeconds) ||
+                //                  (deltaTime <= endTime + DetectOffsetSeconds);
                 // var canRelease = (deltaTime >= endTime - DetectOffsetSeconds) ||
                 //                  (deltaTime <= endTime);
+                var canRelease = deltaTime <= endTime - DetectOffsetSeconds;
 
+                if (action.ActionKind != noteKind) continue;
                 if (note.HasReleased) continue;
 
                 GameManager.Info($"Current Note: {noteKind}");
@@ -176,7 +178,7 @@ public partial class NotesSequencer : ChartTrackSequencerBase
         }
     }
 
-    public override IEnumerator Play(IEnumerable<ChartNote> chartNotes)
+    public IEnumerator Play(IEnumerable<ChartNote> chartNotes)
     {
         MidiTime previouseEndTimeUsec = new MidiTime(0);
         foreach (var chartNote in chartNotes)

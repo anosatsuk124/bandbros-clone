@@ -9,7 +9,7 @@
    id="svg1"
    inkscape:version="1.4 (86a8ad7, 2024-10-11)"
    sodipodi:docname="note_base.svg"
-   inkscape:export-filename="base.png"
+   inkscape:export-filename="circle_left.png"
    inkscape:export-xdpi="28.799999"
    inkscape:export-ydpi="28.799999"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
@@ -76,7 +76,7 @@
      inkscape:pageshadow="2"
      inkscape:zoom="0.7"
      inkscape:cx="282.85714"
-     inkscape:cy="522.14286"
+     inkscape:cy="506.42857"
      inkscape:document-units="px"
      inkscape:showpageshadow="0"
      inkscape:pagecheckerboard="0"
@@ -87,7 +87,7 @@
      inkscape:window-x="-8"
      inkscape:window-y="-8"
      inkscape:window-maximized="1"
-     inkscape:current-layer="layer1-6"
+     inkscape:current-layer="layer2-8"
      showguides="true"
      inkscape:export-bgcolor="#00000000">
     <inkscape:grid
@@ -137,19 +137,27 @@
        inkscape:label="Icon"
        transform="matrix(0.99795326,0,0,0.99795326,7.9532239,7.9532239)">
       <rect
-         style="display:inline;fill:#000000;stroke-width:5.53084"
+         style="display:none;fill:#000000;stroke-width:5.99904"
          id="rect3"
-         width="211.83565"
+         width="249.21841"
          x="7.6824694"
          y="7.6824694"
          height="249.21841" />
       <circle
-         style="display:none;fill:#000000;fill-opacity:1;stroke-width:4.3603"
+         style="display:inline;fill:#000000;fill-opacity:1;stroke-width:4.3603"
          id="path6"
          cx="132.29167"
          cy="132.29167"
          r="124.60921"
          inkscape:label="circle" />
+      <rect
+         style="display:none;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.290561;stroke-opacity:1"
+         id="rect8"
+         width="248.92786"
+         height="135.38629"
+         x="7.8277502"
+         y="62.749756"
+         ry="24.690359" />
       <rect
          style="display:none;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:4.78158;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
          id="rect6"
@@ -164,10 +172,10 @@
          id="layer2-8"
          inkscape:label="Layer 2"
          transform="translate(-17.801315,3.2042367)"
-         style="display:none">
+         style="display:inline">
         <text
            xml:space="preserve"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:263.605px;font-family:'Ark Pixel 16px Proportional latin';-inkscape-font-specification:'Ark Pixel 16px Proportional latin';text-align:center;writing-mode:lr-tb;direction:ltr;text-anchor:middle;display:inline;fill:#ffffff;fill-opacity:1;stroke-width:93.4762"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:263.605px;font-family:'Ark Pixel 16px Proportional latin';-inkscape-font-specification:'Ark Pixel 16px Proportional latin';text-align:center;writing-mode:lr-tb;direction:ltr;text-anchor:middle;display:none;fill:#ffffff;fill-opacity:1;stroke-width:93.4762"
            x="-142.49867"
            y="-38.341637"
            id="text2-49"
@@ -177,6 +185,17 @@
              x="-142.49867"
              y="-38.341637"
              id="tspan3-6">←</tspan></text>
+        <text
+           xml:space="preserve"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:167.009px;font-family:'Ark Pixel 16px Proportional latin';-inkscape-font-specification:'Ark Pixel 16px Proportional latin';text-align:center;writing-mode:lr-tb;direction:ltr;text-anchor:middle;display:inline;fill:#ffffff;fill-opacity:1;stroke-width:156.603"
+           x="153.37364"
+           y="186.23494"
+           id="text8"><tspan
+             sodipodi:role="line"
+             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:167.009px;font-family:'Ark Pixel 16px Proportional latin';-inkscape-font-specification:'Ark Pixel 16px Proportional latin';text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke-width:156.603"
+             x="153.37364"
+             y="186.23494"
+             id="tspan8">Y</tspan></text>
       </g>
     </g>
   </g>

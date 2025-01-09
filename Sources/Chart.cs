@@ -85,10 +85,7 @@ public class ChartTracks
     public int Count { get => _Tracks.Count; }
     public void Add(ChartTrack track)
     {
-        if (_Tracks.Count < MAX_TRACKS)
-        {
-            _Tracks.Add(track);
-        }
+        _Tracks.Add(track);
     }
 
     public void RemoveAt(int index)
@@ -101,7 +98,6 @@ public class ChartTracks
     }
 
     public List<ChartTrack> _Tracks { get; set; } = new List<ChartTrack>();
-    private readonly static int MAX_TRACKS = Constants.MAX_CHART_TRACK_COUNT;
 }
 
 public class Chart

@@ -32,6 +32,13 @@ public abstract partial class ChartTrackSequencerBase : Node
         this.chartTrack = chartTrack;
         this.actionHandler.Scale = chartTrack.Scale;
         actionHandler.Channel = chartTrack.Channel;
+        metaEventEnumerator = MetaEventEnumerator(chartTrack.Notes);
+    }
+
+    public override void _Process(double delta)
+    {
+        base._Process(delta);
+        metaEventEnumerator.MoveNext();
     }
 
     public void SetScale(Scale scale)
@@ -39,7 +46,41 @@ public abstract partial class ChartTrackSequencerBase : Node
         this.scale = scale;
     }
 
-    public abstract IEnumerator Play(IEnumerable<ChartNote> notes);
+    private IEnumerator metaEventEnumerator;
+    public IEnumerator MetaEventEnumerator(IEnumerable<ChartNote> notes)
+    {
+        foreach (var note in notes)
+        {
+            var currentDuration = note.duration.ToSeconds();
+            var timeoffset = _performanceManager.DeltaTime;
+
+            if (timeoffset < currentDuration)
+            {
+                while (_performanceManager.DeltaTime < currentDuration) yield return null;
+            }
+            HandleMetaEvent(note);
+        }
+    }
+
+    public void HandleMetaEvent(ChartNote note)
+    {
+        switch (note)
+        {
+            case ChartNoteChangeInstrument changeInstrument:
+                {
+                    _performanceManager.SetInstrument(midiChannel, changeInstrument.instrument.bank, changeInstrument.instrument.program);
+                    GameManager.Info($"Channel: {midiChannel}, Instrument: {changeInstrument.instrument}");
+                    break;
+                }
+            case ChartNoteChangeScale changeScale:
+                {
+                    var scale = changeScale.scale;
+                    SetScale(scale);
+                    GameManager.Info($"Channel: {midiChannel}, Scale: {scale}");
+                    break;
+                }
+        };
+    }
 
     public IEnumerator<ChartNote> GetEnumerator()
     {

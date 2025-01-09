@@ -15,9 +15,13 @@ using System.Threading.Tasks;
 public partial class ChartCreatorDebugUi : Control
 {
 	[Export] public PerformanceManager performanceManager;
-	public ActionHandlerBase[] actionHandlers = new ActionHandlerBase[Constants.MAX_MIDI_CHANNEL_COUNT];
+	public List<ActionHandlerBase> actionHandlers = new List<ActionHandlerBase>();
+
+	public int PlayTrackNumber { get => int.Parse(_playTrack.Text); }
 
 	private Chart _chart;
+
+	private LineEdit _playTrack;
 
 	private LineEdit _midiFilePath;
 	private Button _convertButton;
@@ -41,12 +45,7 @@ public partial class ChartCreatorDebugUi : Control
 		_playButton = GetNode<Button>("%PlayButton");
 		_playButton.Pressed += _onPlayButtonPressed;
 
-		for (int i = 0; i < Constants.MAX_MIDI_CHANNEL_COUNT; i++)
-		{
-			actionHandlers[i] = new PerformanceActionHandler();
-			actionHandlers[i].performanceManager = performanceManager;
-			AddChild(actionHandlers[i]);
-		}
+		_playTrack = GetNode<LineEdit>("%TrackInput");
 	}
 
 	public override void _ExitTree()
@@ -101,15 +100,30 @@ public partial class ChartCreatorDebugUi : Control
 			return;
 		}
 
+		this.GetParent<Control>().Visible = false;
+
 		performanceManager.Reset();
 
 		for (int idx = 0; idx < _chart.Tracks.Count; idx++)
 		{
-			sequencers.Add(new ChartTrackAutoPerformance(actionHandlers[idx], _chart.Tracks[idx]));
-			AddChild(sequencers[idx]);
+			if (idx == PlayTrackNumber)
+			{
+				actionHandlers.Add(inputHandler);
+				var performer = new ChartTrackInputPerformance(inputHandler, _chart.Tracks[idx]);
+				sequencers.Add(performer);
+				AddChild(performer);
+				continue;
+			}
+			var actionHandler = new PerformanceActionHandler();
+			actionHandlers.Add(actionHandler);
+			actionHandler.performanceManager = performanceManager;
+			AddChild(actionHandler);
+			var sequencer = new ChartTrackAutoPerformance(actionHandler, _chart.Tracks[idx]);
+			sequencers.Add(sequencer);
+			AddChild(sequencer);
 		}
 
-		notesSequencer = new NotesSequencer(actionHandlers[3], _chart.Tracks[3]);
+		notesSequencer = new NotesSequencer(actionHandlers[PlayTrackNumber], _chart.Tracks[PlayTrackNumber]);
 		notesSequencer.Parent = notesSequencerParent;
 		notesSequencer.DetectPointNode = detectPointNode;
 		notesSequencerParent.AddChild(notesSequencer);
@@ -124,4 +138,5 @@ public partial class ChartCreatorDebugUi : Control
 
 	[Export] public Node2D notesSequencerParent;
 	[Export] public Node2D detectPointNode;
+	[Export] public InputHandler inputHandler;
 }

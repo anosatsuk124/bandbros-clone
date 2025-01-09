@@ -20,26 +20,20 @@ public sealed partial class ChartTrackAutoPerformance : ChartTrackSequencerBase
         enumerator = Play(chartTrack.Notes);
     }
 
-    public override void _PhysicsProcess(double delta)
+    public override void _Process(double delta)
     {
-        if (enumerator.MoveNext())
-        {
-            return;
-        }
+        base._Process(delta);
+        enumerator.MoveNext();
     }
 
 
-    public override IEnumerator Play(IEnumerable<ChartNote> notes)
+    public IEnumerator Play(IEnumerable<ChartNote> notes)
     {
         foreach (var note in notes)
         {
             var currentDuration = note.duration.ToSeconds();
-            var timeoffset = _performanceManager.DeltaTime;
 
-            if (timeoffset < currentDuration)
-            {
-                while (_performanceManager.DeltaTime < currentDuration) yield return null;
-            }
+            while (_performanceManager.DeltaTime < currentDuration) yield return null;
             HandleChartNote(note);
         }
     }
@@ -75,24 +69,11 @@ public sealed partial class ChartTrackAutoPerformance : ChartTrackSequencerBase
 
                     break;
                 }
-            case ChartNoteChangeInstrument changeInstrument:
-                {
-                    _performanceManager.SetInstrument(midiChannel, changeInstrument.instrument.bank, changeInstrument.instrument.program);
-                    GameManager.Info($"Channel: {midiChannel}, Instrument: {changeInstrument.instrument}");
-                    break;
-                }
-            case ChartNoteChangeScale changeScale:
-                {
-                    var scale = changeScale.scale;
-                    SetScale(scale);
-                    GameManager.Info($"Channel: {midiChannel}, Scale: {scale}");
-                    break;
-                }
-            default:
-                {
-                    GameManager.Warn($"Channel: {midiChannel}, Unhandled note type: {note.GetType().Name}");
-                    break;
-                }
+                //            default:
+                //                {
+                //                    GameManager.Warn($"Channel: {midiChannel}, Unhandled note type: {note.GetType().Name}");
+                //                    break;
+                //                }
         }
     }
 }
