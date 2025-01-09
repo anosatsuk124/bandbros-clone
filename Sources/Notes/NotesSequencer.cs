@@ -41,7 +41,7 @@ public partial class NotesSequencer : ChartTrackSequencerBase
         _Init();
     }
 
-    public override void _PhysicsProcess(double delta)
+    public override void _Process(double delta)
     {
         Play(delta);
     }

@@ -37,7 +37,7 @@ public partial class PerformanceManager : Node
         SetDeltaZero();
     }
 
-    public override void _PhysicsProcess(double delta)
+    public override void _Process(double delta)
     {
         DeltaTime += delta;
     }
