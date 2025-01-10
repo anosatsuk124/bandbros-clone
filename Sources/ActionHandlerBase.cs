@@ -69,8 +69,6 @@ public abstract partial class ActionHandlerBase : Node
             _currentPlayingMidiNote[(int)actionKind] = null;
         }
 
-        _modulateWithAction(new PerformanceAction(PerformanceActionKind.SHARP, false, true));
-        _modulateWithAction(new PerformanceAction(PerformanceActionKind.OCTAVE_UP, false, true));
     }
 
     private int _sharp = 0;

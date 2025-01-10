@@ -43,6 +43,7 @@ public partial class NotesSequencer : ChartTrackSequencerBase
 
     public override void _Process(double delta)
     {
+        base._Process(delta);
         Play(delta);
     }
 
@@ -106,21 +107,25 @@ public partial class NotesSequencer : ChartTrackSequencerBase
 
                 var canAttack = (deltaTime >= startTime - DetectOffsetSeconds) ||
                                (deltaTime <= startTime + DetectOffsetSeconds);
-                //var canAttack = (deltaTime >= startTime) ||
-                //             (deltaTime <= startTime + DetectOffsetSeconds);
                 var canRelease = (deltaTime >= endTime - DetectOffsetSeconds) ||
                                  (deltaTime <= endTime + DetectOffsetSeconds);
-                // var canRelease = (deltaTime >= endTime - DetectOffsetSeconds) ||
-                //                  (deltaTime <= endTime);
-                // var canRelease = deltaTime <= endTime - DetectOffsetSeconds;
 
                 if (action.ActionKind != noteKind) continue;
                 if (note.HasReleased) continue;
 
+                if (
+                    note.IsHolding &&
+                    (action.ActionKind.Equals(PerformanceActionKind.OCTAVE_UP) || action.ActionKind.Equals(PerformanceActionKind.SHARP))
+                )
+                {
+                    GameManager.Info($"Note {noteKind} is RELEASED");
+                    note.IsHolding = false;
+                    note.HasReleased = true;
+                    continue;
+                }
+
                 GameManager.Info($"Current Note: {noteKind}");
                 GameManager.Info($"Current Action: {action.ActionKind}");
-                //                GameManager.Info(actionHandler.IsActionJustPressed(action) ? "Just Pressed" : "Not Just Pressed");
-                //                GameManager.Info(actionHandler.IsActionJustReleased(action) ? "Just Released" : "Not Just Released");
 
                 if (!note.IsHolding && actionHandler.IsActionJustPressed(action) && canAttack)
                 {
@@ -193,7 +198,7 @@ public partial class NotesSequencer : ChartTrackSequencerBase
                 continue;
             }
 
-            var actionKinds = PerformanceActionKindExtension.FromMidiNote(hold.note.Note, hold.scale);
+            var actionKinds = PerformanceActionKindExtension.FromMidiNote(hold.note.Note, scale);
             var noteNodes = new Note[actionKinds.Length];
             foreach (var (idx, actionKind) in actionKinds.Select((actionKind, idx) => (idx, actionKind)))
             {

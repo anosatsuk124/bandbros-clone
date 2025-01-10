@@ -44,27 +44,25 @@ public sealed partial class ChartTrackAutoPerformance : ChartTrackSequencerBase
         {
             case ChartNoteHold hold:
                 {
-                    var prevScale = scale with { };
-                    var currentScale = hold.scale with { };
+                    var currentScale = scale with { };
                     var actionKinds = PerformanceActionKindExtension.FromMidiNote(hold.note.Note, currentScale);
 
-                    SetScale(currentScale);
                     foreach (var actionKind in actionKinds)
                     {
                         GameManager.Info($"Channel: {midiChannel}, Press Action: {actionKind.ToActionName()}");
                         actionHandler.PerformHandler(new PerformanceAction(actionKind, true, false, hold.note.Velocity));
                     }
-                    SetScale(prevScale);
 
                     GetTree().CreateTimer(hold.endTime.Sub(hold.startTime).ToSeconds()).Timeout += () =>
                         {
+                            var prevscale = scale with { };
                             SetScale(currentScale);
                             foreach (var actionKind in actionKinds)
                             {
                                 GameManager.Info($"Channel: {midiChannel}, Release Action: {actionKind.ToActionName()}");
                                 actionHandler.PerformHandler(new PerformanceAction(actionKind, false, true, hold.note.Velocity));
                             }
-                            SetScale(prevScale);
+                            SetScale(prevscale);
                         };
 
                     break;

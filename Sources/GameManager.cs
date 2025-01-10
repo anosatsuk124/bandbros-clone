@@ -58,7 +58,7 @@ public partial class Logger : Node
 
     public void Info(string message)
     {
-        GD.Print($"[INFO] [{Time.GetTimeStringFromSystem()}]: {message}");
+        // GD.Print($"[INFO] [{Time.GetTimeStringFromSystem()}]: {message}");
     }
 
     public void Warn(string message)
