@@ -20,7 +20,7 @@ config/note_images_path="res://resources/images/"
 
 soundfont_player/default_soundfont="resources/soundfonts/TimGM6mb.sf2"
 soundfont_player/sample_rate=44100
-soundfont_player/render_to_buffer_rate=80
+soundfont_player/render_to_buffer_rate=30
 
 [autoload]
 

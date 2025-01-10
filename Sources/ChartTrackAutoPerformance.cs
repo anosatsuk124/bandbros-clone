@@ -3,6 +3,7 @@ namespace BandBrosClone;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using BandBrosClone.MusicNotation;
 using Godot;
@@ -47,6 +48,15 @@ public sealed partial class ChartTrackAutoPerformance : ChartTrackSequencerBase
                     var currentScale = scale with { };
                     var actionKinds = PerformanceActionKindExtension.FromMidiNote(hold.note.Note, currentScale);
 
+                    if (!actionKinds.Contains(PerformanceActionKind.SHARP))
+                    {
+                        actionHandler.PerformHandler(new PerformanceAction(PerformanceActionKind.SHARP, false, true, hold.note.Velocity));
+                    }
+                    if (!actionKinds.Contains(PerformanceActionKind.OCTAVE_UP))
+                    {
+                        actionHandler.PerformHandler(new PerformanceAction(PerformanceActionKind.OCTAVE_UP, false, true, hold.note.Velocity));
+                    }
+
                     foreach (var actionKind in actionKinds)
                     {
                         GameManager.Info($"Channel: {midiChannel}, Press Action: {actionKind.ToActionName()}");
@@ -55,14 +65,11 @@ public sealed partial class ChartTrackAutoPerformance : ChartTrackSequencerBase
 
                     GetTree().CreateTimer(hold.endTime.Sub(hold.startTime).ToSeconds()).Timeout += () =>
                         {
-                            var prevscale = scale with { };
-                            SetScale(currentScale);
                             foreach (var actionKind in actionKinds)
                             {
                                 GameManager.Info($"Channel: {midiChannel}, Release Action: {actionKind.ToActionName()}");
                                 actionHandler.PerformHandler(new PerformanceAction(actionKind, false, true, hold.note.Velocity));
                             }
-                            SetScale(prevscale);
                         };
 
                     break;

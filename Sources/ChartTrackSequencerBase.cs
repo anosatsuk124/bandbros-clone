@@ -52,12 +52,7 @@ public abstract partial class ChartTrackSequencerBase : Node
         foreach (var note in notes)
         {
             var currentDuration = note.duration.ToSeconds();
-            var timeoffset = _performanceManager.DeltaTime;
-
-            if (timeoffset < currentDuration)
-            {
-                while (_performanceManager.DeltaTime < currentDuration) yield return null;
-            }
+            while (_performanceManager.DeltaTime < currentDuration) yield return null;
             HandleMetaEvent(note);
         }
     }
