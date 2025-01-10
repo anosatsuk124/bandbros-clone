@@ -21,9 +21,6 @@ public abstract partial class ActionHandlerBase : Node
 
     public PerformanceAction[] PerformingActions = new PerformanceAction[Enum.GetValues<PerformanceActionKind>().Length];
 
-    [Signal]
-    public delegate void OnActionEventHandler();
-
     public bool IsActionPressing(PerformanceAction action)
     {
         var _action = PerformingActions[(int)action.ActionKind];
@@ -112,7 +109,6 @@ public abstract partial class ActionHandlerBase : Node
     public void PerformHandler(PerformanceAction action)
     {
         PerformingActions[(int)action.ActionKind] = action;
-        EmitSignal(SignalName.OnAction);
         var velocity = action.Velocity ?? new MidiNoteVelocity(100);
 
         if (action.ActionKind.Equals(PerformanceActionKind.SHARP) || action.ActionKind.Equals(PerformanceActionKind.OCTAVE_UP))

@@ -18,12 +18,14 @@ using System;
 [JsonDerivedType(typeof(ChartNoteChangeTimeSignature), "changeTimeSignature")]
 [JsonDerivedType(typeof(ChartNoteChangeScale), "changeScale")]
 [JsonDerivedType(typeof(ChartNoteChangeInstrument), "changeInstrument")]
+[JsonDerivedType(typeof(ChartNoteChangeKeySignature), "changeKeySignature")]
 public abstract record ChartNote(MidiTime duration);
 public sealed record ChartNoteHold(MidiChannel channel, MidiNote note, ScaleClass scale, MidiTime startTime, MidiTime endTime) : ChartNote(startTime);
 public sealed record ChartNoteChangeTempo(MidiTempo MidiTempo, MidiTime duration) : ChartNote(duration);
 public sealed record ChartNoteChangeTimeSignature(MidiTimeSignature timeSignature, MidiTime duration) : ChartNote(duration);
 public sealed record ChartNoteChangeScale(ScaleClass scale, MidiTime duration) : ChartNote(duration);
 public sealed record ChartNoteChangeInstrument(MidiChannel channel, MidiInstrumet instrument, MidiTime duration) : ChartNote(duration);
+public sealed record ChartNoteChangeKeySignature(ScaleClass scale, MidiTime duration) : ChartNote(duration);
 
 public class ChartTrack
 {
@@ -193,8 +195,7 @@ public class Chart
                 {
                     if (chartTrack.Channel == 10) continue;
                     var scale = scales.Last().UpdateKeySig(keySignatureEvent.Key);
-                    scales.Add(scale);
-                    chartTrack.AddNote(new ChartNoteChangeScale(scale, currentTime));
+                    chartTrack.AddNote(new ChartNoteChangeKeySignature(scale, currentTime));
                 }
             }
 

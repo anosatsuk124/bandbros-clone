@@ -16,18 +16,18 @@ public partial class GameManager : Node
 
     public static void Error(string message)
     {
-        _logger.EmitSignal(nameof(Logger.ErrorSignal), message);
+        _logger.Error(message);
         Instance.Quit();
     }
 
     public static void Info(string message)
     {
-        _logger.EmitSignal(nameof(Logger.InfoSignal), message);
+        _logger.Info(message);
     }
 
     public static void Warn(string message)
     {
-        _logger.EmitSignal(nameof(Logger.WarnSignal), message);
+        _logger.Warn(message);
     }
 
     public void Quit()
@@ -38,22 +38,8 @@ public partial class GameManager : Node
 
 public partial class Logger : Node
 {
-    [Signal]
-    public delegate void InfoSignalEventHandler(string message);
-
-    [Signal]
-    public delegate void ErrorSignalEventHandler(string message);
-
-    [Signal]
-    public delegate void WarnSignalEventHandler(string message);
-
     public override void _Ready()
     {
-        InfoSignal += Info;
-
-        ErrorSignal += Error;
-
-        WarnSignal += Warn;
     }
 
     public void Info(string message)

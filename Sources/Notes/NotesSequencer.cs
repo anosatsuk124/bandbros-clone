@@ -129,6 +129,7 @@ public partial class NotesSequencer : ChartTrackSequencerBase
 
                 if (!note.IsHolding && actionHandler.IsActionJustPressed(action) && canAttack)
                 {
+                    if ((i == 1 && !currentNotes[0].IsHolding) || (i == 2 && !currentNotes[0].IsHolding && !currentNotes[1].IsHolding)) continue;
                     GameManager.Info($"Note {noteKind} is HIT");
                     note.IsHolding = true;
                     if (endTime - startTime <= 0.2)
